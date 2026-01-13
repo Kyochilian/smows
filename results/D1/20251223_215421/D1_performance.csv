@@ -1,0 +1,10 @@
+seed:0, lambda1:1, lambda2:0.1, spatial_k:9, adj_k:20, wieght_list:[1, 1, 1, 1, 1, 1], 0.6478,0.2838,0.3826,0.3811,0.3784,0.3826,0.5636
+seed:0, lambda1:1, lambda2:0.1, spatial_k:9, adj_k:20, wieght_list:[1, 1, 1, 1, 1, 1], 0.6174,0.2713,0.3629,0.3591,0.3586,0.3629,0.5472
+seed:0, lambda1:1, lambda2:0.1, spatial_k:9, adj_k:20, wieght_list:[1, 1, 1, 1, 1, 1], 0.5924,0.2586,0.3567,0.3511,0.3523,0.3567,0.5459
+seed:0, lambda1:1, lambda2:0.1, spatial_k:9, adj_k:20, wieght_list:[1, 1, 1, 1, 1, 1], 0.6484,0.2806,0.3828,0.3760,0.3787,0.3828,0.5575
+seed:0, lambda1:1, lambda2:0.1, spatial_k:9, adj_k:20, wieght_list:[1, 1, 1, 1, 1, 1], 0.6517,0.2793,0.3876,0.3819,0.3836,0.3876,0.5612
+seed:0, lambda1:1, lambda2:0.1, spatial_k:9, adj_k:20, wieght_list:[1, 1, 1, 1, 1, 1], 0.6502,0.2792,0.3886,0.3795,0.3845,0.3886,0.5616
+seed:0, lambda1:1, lambda2:0.1, spatial_k:9, adj_k:20, wieght_list:[1, 1, 1, 1, 1, 1], 0.6478,0.2791,0.3891,0.3773,0.3851,0.3891,0.5557
+seed:0, lambda1:1, lambda2:0.1, spatial_k:9, adj_k:20, wieght_list:[1, 1, 1, 1, 1, 1], 0.6505,0.2807,0.3842,0.3840,0.3801,0.3842,0.5646
+seed:0, lambda1:1, lambda2:0.1, spatial_k:9, adj_k:20, wieght_list:[1, 1, 1, 1, 1, 1], 0.6475,0.2775,0.3824,0.3786,0.3783,0.3824,0.5632
+seed:0, lambda1:1, lambda2:0.1, spatial_k:9, adj_k:20, wieght_list:[1, 1, 1, 1, 1, 1], 0.6520,0.2786,0.3906,0.3814,0.3867,0.3906,0.5628

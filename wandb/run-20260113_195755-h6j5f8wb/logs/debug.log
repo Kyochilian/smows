@@ -1,0 +1,26 @@
+2026-01-13 19:57:55,286 INFO    MainThread:29344 [wandb_setup.py:_flush():80] Current SDK version is 0.23.1
+2026-01-13 19:57:55,286 INFO    MainThread:29344 [wandb_setup.py:_flush():80] Configure stats pid to 29344
+2026-01-13 19:57:55,286 INFO    MainThread:29344 [wandb_setup.py:_flush():80] Loading settings from C:\Users\Lenovo\.config\wandb\settings
+2026-01-13 19:57:55,286 INFO    MainThread:29344 [wandb_setup.py:_flush():80] Loading settings from D:\SpaFusion\wandb\settings
+2026-01-13 19:57:55,286 INFO    MainThread:29344 [wandb_setup.py:_flush():80] Loading settings from environment variables
+2026-01-13 19:57:55,286 INFO    MainThread:29344 [wandb_init.py:setup_run_log_directory():714] Logging user logs to D:\SpaFusion\wandb\run-20260113_195755-h6j5f8wb\logs\debug.log
+2026-01-13 19:57:55,287 INFO    MainThread:29344 [wandb_init.py:setup_run_log_directory():715] Logging internal logs to D:\SpaFusion\wandb\run-20260113_195755-h6j5f8wb\logs\debug-internal.log
+2026-01-13 19:57:55,287 INFO    MainThread:29344 [wandb_init.py:init():841] calling init triggers
+2026-01-13 19:57:55,287 INFO    MainThread:29344 [wandb_init.py:init():846] wandb.init called with sweep_config: {}
+config: {'name': 'D1', 'device': 'cuda:0', 'seed': 0, 'spatial_k': 9, 'adj_k': 20, 'lambda1': 1, 'lambda2': 0.1, 'weight_list': [1, 1, 1, 1, 1, 1], 'lr': 0.002, 'pretrain_epoch': 10000, 'train_epoch': 350, 'use_wandb': True, 'wandb_project': 'SpaFusion', 'skip_pretrain': True, '_wandb': {}}
+2026-01-13 19:57:55,287 INFO    MainThread:29344 [wandb_init.py:init():889] starting backend
+2026-01-13 19:57:57,649 INFO    MainThread:29344 [wandb_init.py:init():892] sending inform_init request
+2026-01-13 19:57:57,665 INFO    MainThread:29344 [wandb_init.py:init():900] backend started and connected
+2026-01-13 19:57:57,666 INFO    MainThread:29344 [wandb_init.py:init():970] updated telemetry
+2026-01-13 19:57:57,712 INFO    MainThread:29344 [wandb_init.py:init():994] communicating run to backend with 90.0 second timeout
+2026-01-13 19:58:05,933 INFO    MainThread:29344 [wandb_init.py:init():1041] starting run threads in backend
+2026-01-13 19:58:06,119 INFO    MainThread:29344 [wandb_run.py:_console_start():2521] atexit reg
+2026-01-13 19:58:06,119 INFO    MainThread:29344 [wandb_run.py:_redirect():2369] redirect: wrap_raw
+2026-01-13 19:58:06,120 INFO    MainThread:29344 [wandb_run.py:_redirect():2438] Wrapping output streams.
+2026-01-13 19:58:06,120 INFO    MainThread:29344 [wandb_run.py:_redirect():2461] Redirects installed.
+2026-01-13 19:58:06,123 INFO    MainThread:29344 [wandb_init.py:init():1081] run started, returning control to user process
+2026-01-13 20:07:45,475 INFO    MainThread:29344 [wandb_run.py:_finish():2287] finishing run invictus_nxu/SpaFusion/h6j5f8wb
+2026-01-13 20:07:45,476 INFO    MainThread:29344 [wandb_run.py:_atexit_cleanup():2486] got exitcode: 0
+2026-01-13 20:07:45,476 INFO    MainThread:29344 [wandb_run.py:_restore():2468] restore
+2026-01-13 20:07:45,476 INFO    MainThread:29344 [wandb_run.py:_restore():2474] restore done
+2026-01-13 20:07:48,133 INFO    MainThread:29344 [wandb_run.py:_footer_sync_info():3862] logging synced files

@@ -1,0 +1,12 @@
+{"time":"2025-12-22T00:26:57.0865622+08:00","level":"INFO","msg":"stream: starting","core version":"0.23.1"}
+{"time":"2025-12-22T00:26:57.913866+08:00","level":"INFO","msg":"stream: created new stream","id":"vufo1plk"}
+{"time":"2025-12-22T00:26:57.913866+08:00","level":"INFO","msg":"handler: started","stream_id":"vufo1plk"}
+{"time":"2025-12-22T00:26:57.9143739+08:00","level":"INFO","msg":"stream: started","id":"vufo1plk"}
+{"time":"2025-12-22T00:26:57.9143739+08:00","level":"INFO","msg":"writer: started","stream_id":"vufo1plk"}
+{"time":"2025-12-22T00:26:57.9143739+08:00","level":"INFO","msg":"sender: started","stream_id":"vufo1plk"}
+{"time":"2025-12-22T00:40:31.9608177+08:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-12-22T00:40:32.7214177+08:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2025-12-22T00:40:32.7245918+08:00","level":"INFO","msg":"stream: closing","id":"vufo1plk"}
+{"time":"2025-12-22T00:40:32.7245918+08:00","level":"INFO","msg":"handler: closed","stream_id":"vufo1plk"}
+{"time":"2025-12-22T00:40:32.7245918+08:00","level":"INFO","msg":"sender: closed","stream_id":"vufo1plk"}
+{"time":"2025-12-22T00:40:32.7245918+08:00","level":"INFO","msg":"stream: closed","id":"vufo1plk"}

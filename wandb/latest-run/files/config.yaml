@@ -1,0 +1,91 @@
+_wandb:
+    value:
+        cli_version: 0.23.1
+        e:
+            9ebof8diml2f29nmpf1gqvovg0qq6vno:
+                codePath: main.py
+                codePathLocal: main.py
+                cpu_count: 8
+                cpu_count_logical: 16
+                cudaVersion: "12.9"
+                disk:
+                    /:
+                        total: "212995936256"
+                        used: "14701056000"
+                email: phantasma.inv@gmail.com
+                executable: /home/lab202/anaconda3/envs/spafusion/bin/python
+                git:
+                    commit: 4894eba7061c757a29b8af08501686ee8d0b1d1d
+                    remote: https://github.com/polarisChen/SpaFusion.git
+                gpu: NVIDIA TITAN RTX
+                gpu_count: 1
+                gpu_nvidia:
+                    - architecture: Turing
+                      cudaCores: 4608
+                      memoryTotal: "25769803776"
+                      name: NVIDIA TITAN RTX
+                      uuid: GPU-293535c6-8083-d6a5-24f8-ad4530329e5f
+                host: lab202-C246-WU4
+                memory:
+                    total: "67317997568"
+                os: Linux-6.8.0-83-generic-x86_64-with-glibc2.35
+                program: /home/lab202/xhb/ai4bio/SpaFusion/main.py
+                python: CPython 3.10.14
+                root: /home/lab202/xhb/ai4bio/SpaFusion
+                startedAt: "2025-12-17T08:04:16.568533Z"
+                writerId: 9ebof8diml2f29nmpf1gqvovg0qq6vno
+        m: []
+        python_version: 3.10.14
+        t:
+            "1":
+                - 1
+                - 5
+                - 53
+                - 100
+            "2":
+                - 1
+                - 5
+                - 53
+                - 100
+            "3":
+                - 2
+                - 13
+                - 16
+            "4": 3.10.14
+            "5": 0.23.1
+            "10":
+                - 20
+            "12": 0.23.1
+            "13": linux-x86_64
+adj_k:
+    value: 20
+device:
+    value: cuda:0
+lambda1:
+    value: 1
+lambda2:
+    value: 0.1
+lr:
+    value: 0.002
+name:
+    value: D1
+pretrain_epoch:
+    value: 10000
+seed:
+    value: 0
+spatial_k:
+    value: 9
+train_epoch:
+    value: 5000
+use_wandb:
+    value: true
+wandb_project:
+    value: SpaFusion
+weight_list:
+    value:
+        - 1
+        - 1
+        - 1
+        - 1
+        - 1
+        - 1

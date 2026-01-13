@@ -1,0 +1,101 @@
+_wandb:
+    value:
+        cli_version: 0.23.1
+        e:
+            evvwv1minljonhdq5k09nue9wy92bdlg:
+                codePath: main.py
+                codePathLocal: main.py
+                cpu_count: 16
+                cpu_count_logical: 24
+                cudaVersion: "12.1"
+                disk:
+                    /:
+                        total: "295698427904"
+                        used: "54952316928"
+                email: 1972982775@qq.com
+                executable: D:\SpaFusion\.venv\Scripts\python.exe
+                git:
+                    commit: 4894eba7061c757a29b8af08501686ee8d0b1d1d
+                    remote: https://github.com/polarisChen/SpaFusion.git
+                gpu: NVIDIA RTX A2000 12GB
+                gpu_count: 1
+                gpu_nvidia:
+                    - architecture: Ampere
+                      cudaCores: 3328
+                      memoryTotal: "12878610432"
+                      name: NVIDIA RTX A2000 12GB
+                      uuid: GPU-106652a5-3d3c-810a-781f-c8fc41ee14a4
+                host: DESKTOP-FRJ025H
+                memory:
+                    total: "34018717696"
+                os: Windows-10-10.0.26100-SP0
+                program: d:\SpaFusion\main.py
+                python: CPython 3.10.14
+                root: D:\SpaFusion
+                startedAt: "2025-12-23T15:01:59.968438Z"
+                writerId: evvwv1minljonhdq5k09nue9wy92bdlg
+        m: []
+        python_version: 3.10.14
+        t:
+            "1":
+                - 1
+                - 5
+                - 53
+                - 54
+                - 100
+            "2":
+                - 1
+                - 5
+                - 53
+                - 54
+                - 100
+            "3":
+                - 2
+                - 13
+                - 16
+            "4": 3.10.14
+            "5": 0.23.1
+            "8":
+                - 3
+            "10":
+                - 20
+            "12": 0.23.1
+            "13": windows-amd64
+adj_k:
+    value: 20
+device:
+    value: cuda:0
+lambda1:
+    value: 1
+lambda2:
+    value: 0.1
+lr:
+    value: 0.002
+mae_epochs:
+    value: 500
+mae_mask_ratio:
+    value: 0.15
+name:
+    value: D1
+pretrain_epoch:
+    value: 10000
+seed:
+    value: 0
+skip_pretrain:
+    value: true
+spatial_k:
+    value: 9
+train_epoch:
+    value: 350
+use_wandb:
+    value: true
+wandb_project:
+    value: SpaFusion
+weight_list:
+    value:
+        - 1
+        - 1
+        - 1
+        - 1
+        - 1
+        - 1

@@ -1,0 +1,30 @@
+Training Log - 20251221_233410
+==================================================
+
+Configuration:
+  name: D1
+  device: cuda:0
+  seed: 0
+  spatial_k: 9
+  adj_k: 20
+  lambda1: 1
+  lambda2: 0.1
+  weight_list: [1, 1, 1, 1, 1, 1]
+  lr: 0.002
+  pretrain_epoch: 10000
+  train_epoch: 5000
+  use_wandb: True
+  wandb_project: SpaFusion
+  mae_epochs: 500
+  mae_mask_ratio: 0.15
+
+==================================================
+
+Performance Summary (10 runs):
+  ACC: 0.6471 ± 0.0143
+  F1: 0.2785 ± 0.0042
+  NMI: 0.3842 ± 0.0095
+  ARI: 0.3829 ± 0.0086
+  AMI: 0.3802 ± 0.0096
+  VMS: 0.3842 ± 0.0095
+  FMS: 0.5646 ± 0.0072

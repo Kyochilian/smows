@@ -1,0 +1,16 @@
+{"time":"2026-01-13T20:09:44.7948054+08:00","level":"INFO","msg":"stream: starting","core version":"0.23.1"}
+{"time":"2026-01-13T20:09:45.4126351+08:00","level":"INFO","msg":"stream: created new stream","id":"39l0hbz3"}
+{"time":"2026-01-13T20:09:45.4138136+08:00","level":"INFO","msg":"stream: started","id":"39l0hbz3"}
+{"time":"2026-01-13T20:09:45.4151574+08:00","level":"INFO","msg":"writer: started","stream_id":"39l0hbz3"}
+{"time":"2026-01-13T20:09:45.4151574+08:00","level":"INFO","msg":"sender: started","stream_id":"39l0hbz3"}
+{"time":"2026-01-13T20:09:45.4151574+08:00","level":"INFO","msg":"handler: started","stream_id":"39l0hbz3"}
+{"time":"2026-01-13T20:30:57.358119+08:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/invictus_nxu/SpaFusion/39l0hbz3/file_stream\": unexpected EOF"}
+{"time":"2026-01-13T20:43:41.5814954+08:00","level":"INFO","msg":"api: retrying HTTP error","status":502,"url":"https://api.wandb.ai/files/invictus_nxu/SpaFusion/39l0hbz3/file_stream","body":"\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>502 Server Error</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Server Error</h1>\n<h2>The server encountered a temporary error and could not complete your request.<p>Please try again in 30 seconds.</h2>\n<h2></h2>\n</body></html>\n"}
+{"time":"2026-01-13T20:44:58.6500812+08:00","level":"ERROR","msg":"HTTP error","status":400,"method":"POST","url":"https://api.wandb.ai/graphql"}
+{"time":"2026-01-13T20:44:58.6504662+08:00","level":"ERROR","msg":"sender: failed to log artifact: ArtifactSaver.createArtifact: returned error 400: {\"data\":{\"createArtifact\":null},\"errors\":[{\"message\":\"Invalid Client ID digest\",\"path\":[\"createArtifact\"]}]}","artifactID":""}
+{"time":"2026-01-13T20:45:02.1879121+08:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2026-01-13T20:45:04.0866003+08:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2026-01-13T20:45:04.0915809+08:00","level":"INFO","msg":"stream: closing","id":"39l0hbz3"}
+{"time":"2026-01-13T20:45:04.0915809+08:00","level":"INFO","msg":"handler: closed","stream_id":"39l0hbz3"}
+{"time":"2026-01-13T20:45:04.0915809+08:00","level":"INFO","msg":"sender: closed","stream_id":"39l0hbz3"}
+{"time":"2026-01-13T20:45:04.0915809+08:00","level":"INFO","msg":"stream: closed","id":"39l0hbz3"}

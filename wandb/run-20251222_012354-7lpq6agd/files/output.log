@@ -1,0 +1,11 @@
+✓ WandB initialized: D1_train_run6_seed0
+Epoch: 1/5000 ,loss:8.17608738
+Epoch: 501/5000 ,loss:5.00123358
+Epoch: 1001/5000 ,loss:4.89708567
+Epoch: 1501/5000 ,loss:4.83214378
+Epoch: 2001/5000 ,loss:4.81680536
+Epoch: 2501/5000 ,loss:4.79051781
+Epoch: 3001/5000 ,loss:4.75408936
+Epoch: 3501/5000 ,loss:4.74982262
+Epoch: 4001/5000 ,loss:4.73340893
+Epoch: 4501/5000 ,loss:4.70993519
