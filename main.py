@@ -12,6 +12,7 @@ from utils import *
 from encoder import *
 from high_order_matrix import process_adjacency_matrix
 from evaluate import *
+from config import Config, get_full_config  # Import config system
 import torch.optim as optim
 import time
 import argparse
@@ -116,10 +117,29 @@ class TrainingLogger:
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-def pre_train(x1, x2, spatial_adj1, feature_adj1, spatial_adj2, feature_adj2, Mt1, Mt2, y, n_clusters, num_epoch, device, weight_list, lr, logger=None):
-    model = GCNAutoencoder(input_dim1=x1.shape[1], input_dim2=x2.shape[1], enc_dim1=256, enc_dim2=128, dec_dim1=128,
-                           dec_dim2=256, latent_dim=20, dropout=0.1, num_layers=2, num_heads1=1, num_heads2=1,
-                           n_clusters=n_clusters, n_node=x1.shape[0])
+def pre_train(x1, x2, spatial_adj1, feature_adj1, spatial_adj2, feature_adj2, Mt1, Mt2, y, n_clusters, num_epoch, device, weight_list, lr, logger=None, model_config=None):
+    # Use model_config if provided, otherwise use default values
+    if model_config is None:
+        model_config = {
+            'enc_dim1': 256, 'enc_dim2': 128, 'dec_dim1': 128,
+            'dec_dim2': 256, 'latent_dim': 20, 'dropout': 0.1,
+            'num_layers': 2, 'num_heads1': 1, 'num_heads2': 1
+        }
+    
+    model = GCNAutoencoder(
+        input_dim1=x1.shape[1], input_dim2=x2.shape[1],
+        enc_dim1=model_config.get('enc_dim1', 256),
+        enc_dim2=model_config.get('enc_dim2', 128),
+        dec_dim1=model_config.get('dec_dim1', 128),
+        dec_dim2=model_config.get('dec_dim2', 256),
+        latent_dim=model_config.get('latent_dim', 20),
+        dropout=model_config.get('dropout', 0.1),
+        num_layers=model_config.get('num_layers', 2),
+        num_heads1=model_config.get('num_heads1', 1),
+        num_heads2=model_config.get('num_heads2', 1),
+        n_clusters=n_clusters,
+        n_node=x1.shape[0]
+    )
 
     model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=lr)
@@ -165,10 +185,29 @@ def pre_train(x1, x2, spatial_adj1, feature_adj1, spatial_adj2, feature_adj2, Mt
     return z1_tilde, z2_tilde
 
 
-def train(x1, x2, spatial_adj1, feature_adj1, spatial_adj2, feature_adj2, Mt1, Mt2, y, n_clusters, num_epoch, lambda1, device, seed, lambda2, weight_list, lr, run_idx, spatial_K, adj_K, result_dir, logger=None):
-    model = GCNAutoencoder(input_dim1=x1.shape[1], input_dim2=x2.shape[1], enc_dim1=256, enc_dim2=128, dec_dim1=128,
-                           dec_dim2=256, latent_dim=20, dropout=0.1, num_layers=2, num_heads1=1, num_heads2=1,
-                           n_clusters=n_clusters, n_node=x1.shape[0])
+def train(x1, x2, spatial_adj1, feature_adj1, spatial_adj2, feature_adj2, Mt1, Mt2, y, n_clusters, num_epoch, lambda1, device, seed, lambda2, weight_list, lr, run_idx, spatial_K, adj_K, result_dir, logger=None, model_config=None):
+    # Use model_config if provided, otherwise use default values
+    if model_config is None:
+        model_config = {
+            'enc_dim1': 256, 'enc_dim2': 128, 'dec_dim1': 128,
+            'dec_dim2': 256, 'latent_dim': 20, 'dropout': 0.1,
+            'num_layers': 2, 'num_heads1': 1, 'num_heads2': 1
+        }
+    
+    model = GCNAutoencoder(
+        input_dim1=x1.shape[1], input_dim2=x2.shape[1],
+        enc_dim1=model_config.get('enc_dim1', 256),
+        enc_dim2=model_config.get('enc_dim2', 128),
+        dec_dim1=model_config.get('dec_dim1', 128),
+        dec_dim2=model_config.get('dec_dim2', 256),
+        latent_dim=model_config.get('latent_dim', 20),
+        dropout=model_config.get('dropout', 0.1),
+        num_layers=model_config.get('num_layers', 2),
+        num_heads1=model_config.get('num_heads1', 1),
+        num_heads2=model_config.get('num_heads2', 1),
+        n_clusters=n_clusters,
+        n_node=x1.shape[0]
+    )
     
     model.to(device)
 
@@ -261,40 +300,148 @@ def train(x1, x2, spatial_adj1, feature_adj1, spatial_adj2, feature_adj2, Mt1, M
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description="Model settings")
-    parser.add_argument('--name', type=str, default='D1', help='dataset name')
-    parser.add_argument('--device', type=str, default='cuda:0', help='device')
-    parser.add_argument('--seed', type=int, default=0, help='seed')
-    parser.add_argument('--spatial_k', type=int, default=9, help='spatial_k')
-    parser.add_argument('--adj_k', type=int, default=20, help='adj_k')
-    parser.add_argument('--lambda1', type=float, default=1, help='lambda1')
-    parser.add_argument('--lambda2', type=float, default=0.1, help='lambda2')
-    parser.add_argument('--weight_list', type=list, default=[1, 1, 1, 1, 1, 1], help='weight list')
-    parser.add_argument('--lr', type=float, default=2e-3, help='learning rate')
-    parser.add_argument('--pretrain_epoch', type=int, default=10000, help='pretrain epoch')
-    parser.add_argument('--train_epoch', type=int, default=350, help='train epoch')
-    parser.add_argument('--use_wandb', action='store_true', default=True, help='Enable WandB logging')
-    parser.add_argument('--wandb_project', type=str, default='SpaFusion', help='WandB project name')
-    parser.add_argument('--skip_pretrain', action='store_true', default=False, help='Skip pretraining and use existing pretrained model')
+    # ========= Step 1: Load configuration from config.py =========
+    # This allows you to modify config.py to change default behavior
+    parser = argparse.ArgumentParser(
+        description="SpaFusion - Spatial Multi-omics Fusion Model",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Use config.py defaults
+  python main.py
+  
+  # Override specific parameters
+  python main.py --name D1 --lambda1 0.5
+  
+  # Use different config profiles
+  python main.py --config_name ablation_no_kl
+        """
+    )
+    
+    # Config selection
+    parser.add_argument('--dataset', type=str, default='D1', help='Dataset name from config.py')
+    parser.add_argument('--config_name', type=str, default='default', help='Config profile name (default, ablation_*, etc.)')
+    
+    # Optional overrides (if not provided, uses values from config.py)
+    parser.add_argument('--name', type=str, default=None, help='[Override] Short dataset name')
+    parser.add_argument('--device', type=str, default=None, help='[Override] Device (cuda:0, cpu, etc.)')
+    parser.add_argument('--seed', type=int, default=None, help='[Override] Random seed')
+    parser.add_argument('--spatial_k', type=int, default=None, help='[Override] Number of spatial neighbors')
+    parser.add_argument('--adj_k', type=int, default=None, help='[Override] Number of feature neighbors')
+    parser.add_argument('--lambda1', type=float, default=None, help='[Override] KL divergence weight')
+    parser.add_argument('--lambda2', type=float, default=None, help='[Override] Consistency loss weight')
+    parser.add_argument('--lr', type=float, default=None, help='[Override] Learning rate')
+    parser.add_argument('--pretrain_epoch', type=int, default=None, help='[Override] Pretraining epochs')
+    parser.add_argument('--train_epoch', type=int, default=None, help='[Override] Training epochs')
+    parser.add_argument('--use_wandb', action='store_true', default=None, help='[Override] Enable WandB')
+    parser.add_argument('--no_wandb', action='store_true', help='Disable WandB logging')
+    parser.add_argument('--wandb_project', type=str, default=None, help='[Override] WandB project name')
+    parser.add_argument('--skip_pretrain', action='store_true', default=False, help='Skip pretraining')
 
-    opt = parser.parse_args()
+    args = parser.parse_args()
 
-    print("setting:")
-    print("------------------------------")
-    print("dataset        : {}".format(opt.name))
-    print("device         : {}".format(opt.device))
-    print("seed           : {}".format(opt.seed))
-    print("spatial_k      : {}".format(opt.spatial_k))
-    print("adj_k          : {}".format(opt.adj_k))
-    print("lambda1        : {}".format(opt.lambda1))
-    print("lambda2        : {}".format(opt.lambda2))
-    print("weight_list    : {}".format(opt.weight_list))
-    print("learning rate  : {:.0e}".format(opt.lr))
-    print("pretrain epoch : {}".format(opt.pretrain_epoch))
-    print("training epoch : {}".format(opt.train_epoch))
-    print("use_wandb      : {}".format(opt.use_wandb))
-    print("skip_pretrain  : {}".format(opt.skip_pretrain))
-    print("------------------------------")
+    # ========= Step 2: Load config from config.py =========
+    print("=" * 60)
+    print("Loading configuration from config.py...")
+    try:
+        cfg = get_full_config(
+            dataset=args.dataset,
+            training=args.config_name,
+        )
+        print(f"✓ Loaded config profile: '{args.config_name}' for dataset '{args.dataset}'")
+    except Exception as e:
+        print(f"✗ Error loading config: {e}")
+        print("Using default hardcoded values as fallback")
+        cfg = {
+            'name': 'D1',
+            'spatial_k': 9,
+            'adj_k': 20,
+            'lambda1': 1.0,
+            'lambda2': 0.1,
+            'lr': 2e-3,
+            'pretrain_epoch': 10000,
+            'train_epoch': 350,
+            'seed': 0,
+            'device': 'cuda:0',
+            'use_wandb': True,
+            'wandb_project': 'SpaFusion',
+            'weight_list': [1, 1, 1, 1, 1, 1],
+        }
+    
+    # ========= Step 3: Apply command-line overrides =========
+    # Any command-line argument overrides the config.py value
+    overrides = {}
+    if args.name is not None:
+        cfg['name'] = args.name
+        overrides['name'] = args.name
+    if args.device is not None:
+        cfg['device'] = args.device
+        overrides['device'] = args.device
+    if args.seed is not None:
+        cfg['seed'] = args.seed
+        overrides['seed'] = args.seed
+    if args.spatial_k is not None:
+        cfg['spatial_k'] = args.spatial_k
+        overrides['spatial_k'] = args.spatial_k
+    if args.adj_k is not None:
+        cfg['adj_k'] = args.adj_k
+        overrides['adj_k'] = args.adj_k
+    if args.lambda1 is not None:
+        cfg['lambda1'] = args.lambda1
+        overrides['lambda1'] = args.lambda1
+    if args.lambda2 is not None:
+        cfg['lambda2'] = args.lambda2
+        overrides['lambda2'] = args.lambda2
+    if args.lr is not None:
+        cfg['lr'] = args.lr
+        overrides['lr'] = args.lr
+    if args.pretrain_epoch is not None:
+        cfg['pretrain_epoch'] = args.pretrain_epoch
+        overrides['pretrain_epoch'] = args.pretrain_epoch
+    if args.train_epoch is not None:
+        cfg['train_epoch'] = args.train_epoch
+        overrides['train_epoch'] = args.train_epoch
+    if args.use_wandb is not None:
+        cfg['use_wandb'] = True
+        overrides['use_wandb'] = True
+    if args.no_wandb:
+        cfg['use_wandb'] = False
+        overrides['use_wandb'] = False
+    if args.wandb_project is not None:
+        cfg['wandb_project'] = args.wandb_project
+        overrides['wandb_project'] = args.wandb_project
+    
+    # Add skip_pretrain flag
+    cfg['skip_pretrain'] = args.skip_pretrain
+    
+    # Create opt object for backward compatibility
+    class Options:
+        pass
+    opt = Options()
+    for key, value in cfg.items():
+        setattr(opt, key, value)
+    
+    # ========= Step 4: Display configuration =========
+    print("=" * 60)
+    print("CONFIGURATION:")
+    print("=" * 60)
+    if overrides:
+        print("Command-line overrides applied:", ", ".join(overrides.keys()))
+    print("-" * 60)
+    print(f"dataset        : {opt.name}")
+    print(f"device         : {cfg.get('device', 'cuda:0')}")
+    print(f"seed           : {opt.seed}")
+    print(f"spatial_k      : {opt.spatial_k}")
+    print(f"adj_k          : {opt.adj_k}")
+    print(f"lambda1        : {opt.lambda1}")
+    print(f"lambda2        : {opt.lambda2}")
+    print(f"weight_list    : {cfg.get('weight_list', [1,1,1,1,1,1])}")
+    print(f"learning rate  : {opt.lr:.0e}")
+    print(f"pretrain epoch : {opt.pretrain_epoch}")
+    print(f"training epoch : {opt.train_epoch}")
+    print(f"use_wandb      : {opt.use_wandb}")
+    print(f"skip_pretrain  : {opt.skip_pretrain}")
+    print("=" * 60)
     setup_seed(opt.seed)
 
     # ========= 配置信息 =========
@@ -383,6 +530,19 @@ if __name__ == '__main__':
     # ========= 预训练逻辑 =========
     pretrain_model_path = r'./pretrain/{}_pre_model.pkl'.format(opt.name)
     
+    # Extract model configuration
+    model_config = {
+        'enc_dim1': cfg.get('enc_dim1', 256),
+        'enc_dim2': cfg.get('enc_dim2', 128),
+        'dec_dim1': cfg.get('dec_dim1', 128),
+        'dec_dim2': cfg.get('dec_dim2', 256),
+        'latent_dim': cfg.get('latent_dim', 20),
+        'dropout': cfg.get('dropout', 0.1),
+        'num_layers': cfg.get('num_layers', 2),
+        'num_heads1': cfg.get('num_heads1', 1),
+        'num_heads2': cfg.get('num_heads2', 1),
+    }
+    
     if opt.skip_pretrain:
         # 检查预训练模型是否存在
         if os.path.exists(pretrain_model_path):
@@ -394,8 +554,8 @@ if __name__ == '__main__':
         print("================================Pre_training...============================================")
         z1_tilde, z2_tilde = pre_train(x1=data1, x2=data2, spatial_adj1=spatial_adj1, feature_adj1=feature_adj1,
                                     spatial_adj2=spatial_adj2, feature_adj2=feature_adj2, Mt1=Mt1, Mt2=Mt2, y=label, n_clusters=n_clusters,
-                                    num_epoch=opt.pretrain_epoch, device=device, weight_list=opt.weight_list, lr=opt.lr,
-                                    logger=logger)
+                                    num_epoch=opt.pretrain_epoch, device=device, weight_list=cfg.get('weight_list', [1,1,1,1,1,1]), lr=opt.lr,
+                                    logger=logger, model_config=model_config)
 
     # ========= 10次训练，使用同一个 logger =========
     all_metrics = []
@@ -404,9 +564,9 @@ if __name__ == '__main__':
         
         z1_tilde, z2_tilde, metrics = train(x1=data1, x2=data2, spatial_adj1=spatial_adj1, feature_adj1=feature_adj1, spatial_adj2=spatial_adj2,
                                 feature_adj2=feature_adj2, y=label, n_clusters=n_clusters, Mt1=Mt1, Mt2=Mt2, num_epoch=opt.train_epoch, lambda1=opt.lambda1,
-                                device=device, seed=opt.seed, lambda2=opt.lambda2, weight_list=opt.weight_list, lr=opt.lr, run_idx=i, 
+                                device=device, seed=opt.seed, lambda2=opt.lambda2, weight_list=cfg.get('weight_list', [1,1,1,1,1,1]), lr=opt.lr, run_idx=i, 
                                 spatial_K=opt.spatial_k, adj_K=opt.adj_k, result_dir=result_dir,
-                                logger=logger)
+                                logger=logger, model_config=model_config)
         
         if metrics:
             all_metrics.append(metrics)

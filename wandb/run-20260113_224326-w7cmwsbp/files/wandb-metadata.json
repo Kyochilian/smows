@@ -1,0 +1,39 @@
+{
+  "os":  "Windows-10-10.0.26100-SP0",
+  "python":  "CPython 3.10.14",
+  "startedAt":  "2026-01-13T14:43:26.584711Z",
+  "program":  "d:\\SpaFusion\\main.py",
+  "codePath":  "main.py",
+  "codePathLocal":  "main.py",
+  "git":  {
+    "commit":  "28d0b18c2deb357d215c32890143f3bd63d82228"
+  },
+  "email":  "1972982775@qq.com",
+  "root":  "D:\\SpaFusion",
+  "host":  "DESKTOP-FRJ025H",
+  "executable":  "D:\\SpaFusion\\.venv\\Scripts\\python.exe",
+  "cpu_count":  16,
+  "cpu_count_logical":  24,
+  "gpu":  "NVIDIA RTX A2000 12GB",
+  "gpu_count":  1,
+  "disk":  {
+    "/":  {
+      "total":  "295698427904",
+      "used":  "94716309504"
+    }
+  },
+  "memory":  {
+    "total":  "34018717696"
+  },
+  "gpu_nvidia":  [
+    {
+      "name":  "NVIDIA RTX A2000 12GB",
+      "memoryTotal":  "12878610432",
+      "cudaCores":  3328,
+      "architecture":  "Ampere",
+      "uuid":  "GPU-106652a5-3d3c-810a-781f-c8fc41ee14a4"
+    }
+  ],
+  "cudaVersion":  "12.1",
+  "writerId":  "3d9ar5970qxk8rvsmqeqtxo3aepryxyb"
+}
