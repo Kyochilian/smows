@@ -1,8 +1,7 @@
 # smows
 
-A multi-level fusion model for clustering spatial multi-omics data.
-
-![framework](Spafusion.jpg)
+expert multi-scale network for spatial multi-omics with scGPT.
+continue training.
 
 **Author**: kyochilian  
 **Email**: kyochilian@gmail.com  
@@ -10,7 +9,7 @@ A multi-level fusion model for clustering spatial multi-omics data.
 
 ## Overview
 
-smows (formerly SpaFusion) is a deep learning framework that integrates spatial multi-omics data (e.g., RNA + Protein) using a combination of Graph Convolutional Networks (GCN) and Transformers. The model performs multi-level fusion to enable effective clustering of spatial omics data.
+smows is a deep learning framework that integrates spatial multi-omics data (e.g., RNA + Protein) using a combination of Graph Convolutional Networks (GCN) and scGPTs. The model performs multi-level fusion to enable effective clustering of spatial omics data.
 
 ## Features
 
@@ -159,7 +158,7 @@ If you use SpaFusion in your research, please cite:
 
 ## License
 
-[License to be determined]
+the rep follows MIT License.
 
 ## Contact
 
