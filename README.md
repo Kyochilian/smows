@@ -1,4 +1,4 @@
-# SpaFusion
+# smows
 
 A multi-level fusion model for clustering spatial multi-omics data.
 
@@ -10,7 +10,7 @@ A multi-level fusion model for clustering spatial multi-omics data.
 
 ## Overview
 
-SpaFusion is a deep learning framework that integrates spatial multi-omics data (e.g., RNA + Protein) using a combination of Graph Convolutional Networks (GCN) and Transformers. The model performs multi-level fusion to enable effective clustering of spatial omics data.
+smows (formerly SpaFusion) is a deep learning framework that integrates spatial multi-omics data (e.g., RNA + Protein) using a combination of Graph Convolutional Networks (GCN) and Transformers. The model performs multi-level fusion to enable effective clustering of spatial omics data.
 
 ## Features
 
@@ -21,7 +21,7 @@ SpaFusion is a deep learning framework that integrates spatial multi-omics data 
 
 ## Requirements
 
-SpaFusion is implemented in PyTorch and requires CUDA for optimal performance.
+smows is implemented in PyTorch and requires CUDA for optimal performance.
 
 ```bash
 conda env create -f environment.yml

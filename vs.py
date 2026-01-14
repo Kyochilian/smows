@@ -17,7 +17,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # ========= 命令行参数解析 =========
-parser = argparse.ArgumentParser(description='SpaFusion Visualization')
+parser = argparse.ArgumentParser(description='smows Visualization')
 parser.add_argument('--result_dir', type=str, default=None,
                     help='Path to result directory (e.g., results/D1/20231221_231959)')
 parser.add_argument('--dataset', type=str, default='D1',

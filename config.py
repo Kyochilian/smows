@@ -19,7 +19,7 @@ class Config:
     # Dataset Configurations
     DATASETS = {
         'D1': {
-            'name': 'Human_lymph_node_D1',
+            'name': 'D1',
             'data_path': './data/',
             'label_file': 'D1_annotation_labels.csv',
             'rna_file': 'adata_RNA.h5ad',
@@ -126,7 +126,7 @@ class Config:
     # WandB Logging Configuration
     WANDB_CONFIG = {
         'enabled': True,
-        'project_name': 'SpaFusion',
+        'project_name': 'smows',
         'entity': None,  # Set to your WandB username/team if needed
     }
     

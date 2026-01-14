@@ -1,0 +1,142 @@
+_wandb:
+    value:
+        cli_version: 0.23.1
+        e:
+            m4h5pxdwyyapsz5wlwthyvzjo04jayb2:
+                codePath: main.py
+                codePathLocal: main.py
+                cpu_count: 16
+                cpu_count_logical: 24
+                cudaVersion: "12.1"
+                disk:
+                    /:
+                        total: "295698427904"
+                        used: "95557341184"
+                email: 1972982775@qq.com
+                executable: D:\SpaFusion\.venv\Scripts\python.exe
+                git:
+                    commit: 57ead2fffaabb4ad4b2ed93830f62e6d1c7ec830
+                gpu: NVIDIA RTX A2000 12GB
+                gpu_count: 1
+                gpu_nvidia:
+                    - architecture: Ampere
+                      cudaCores: 3328
+                      memoryTotal: "12878610432"
+                      name: NVIDIA RTX A2000 12GB
+                      uuid: GPU-106652a5-3d3c-810a-781f-c8fc41ee14a4
+                host: DESKTOP-FRJ025H
+                memory:
+                    total: "34018717696"
+                os: Windows-10-10.0.26100-SP0
+                program: d:\SpaFusion\main.py
+                python: CPython 3.10.14
+                root: D:\SpaFusion
+                startedAt: "2026-01-14T01:45:12.717268Z"
+                writerId: m4h5pxdwyyapsz5wlwthyvzjo04jayb2
+        m: []
+        python_version: 3.10.14
+        t:
+            "1":
+                - 1
+                - 5
+                - 53
+                - 54
+                - 100
+            "2":
+                - 1
+                - 5
+                - 53
+                - 54
+                - 100
+            "3":
+                - 13
+                - 16
+            "4": 3.10.14
+            "5": 0.23.1
+            "8":
+                - 3
+            "10":
+                - 20
+            "12": 0.23.1
+            "13": windows-amd64
+adj_dir:
+    value: ./pre_adj
+adj_k:
+    value: 20
+data_path:
+    value: ./data/
+dec_dim1:
+    value: 128
+dec_dim2:
+    value: 256
+device:
+    value: cpu
+dropout:
+    value: 0.1
+enc_dim1:
+    value: 256
+enc_dim2:
+    value: 128
+has_labels:
+    value: true
+label_file:
+    value: D1_annotation_labels.csv
+lambda1:
+    value: 1
+lambda2:
+    value: 0.1
+latent_dim:
+    value: 20
+lr:
+    value: 0.002
+name:
+    value: D1
+num_heads1:
+    value: 1
+num_heads2:
+    value: 1
+num_layers:
+    value: 2
+num_runs:
+    value: 10
+paper_metrics:
+    value:
+        ACC: 0.599
+        AMI: 0.379
+        ARI: 0.351
+        F1: 0.323
+        NMI: 0.384
+pretrain_dir:
+    value: ./pretrain
+pretrain_epoch:
+    value: 10000
+protein_file:
+    value: adata_ADT.h5ad
+result_dir:
+    value: ./results
+rna_file:
+    value: adata_RNA.h5ad
+seed:
+    value: 0
+skip_pretrain:
+    value: false
+spatial_k:
+    value: 9
+train_epoch:
+    value: 350
+use_wandb:
+    value: true
+view1:
+    value: RNA
+view2:
+    value: Protein
+wandb_project:
+    value: SpaFusion
+weight_list:
+    value:
+        - 1
+        - 1
+        - 1
+        - 1
+        - 1
+        - 1

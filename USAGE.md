@@ -1,4 +1,4 @@
-# SpaFusion Usage Guide
+# smows Usage Guide
 
 ## Quick Start
 

@@ -3,8 +3,8 @@
 Author: kyochilian
 Date: 2026.02
 
-SpaFusion Model
-This module contains the main SpaFusion fusion model that combines GCN and Transformer components.
+smows Model
+This module contains the main smows fusion model that combines GCN and Transformer components.
 """
 
 import torch
@@ -38,7 +38,7 @@ class q_distribution(nn.Module):
 
 class GCNAutoencoder(nn.Module):
     """
-    SpaFusion Main Model
+    smows Main Model
     A multi-level fusion model combining GCN and Transformer for spatial multi-omics data
     """
     

@@ -303,7 +303,7 @@ if __name__ == '__main__':
     # ========= Step 1: Load configuration from config.py =========
     # This allows you to modify config.py to change default behavior
     parser = argparse.ArgumentParser(
-        description="SpaFusion - Spatial Multi-omics Fusion Model",
+        description="smows - Spatial Multi-omics Fusion Model",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -335,7 +335,7 @@ Examples:
     parser.add_argument('--train_epoch', type=int, default=None, help='[Override] Training epochs')
     parser.add_argument('--use_wandb', action='store_true', default=None, help='[Override] Enable WandB')
     parser.add_argument('--no_wandb', action='store_true', help='Disable WandB logging')
-    parser.add_argument('--wandb_project', type=str, default=None, help='[Override] WandB project name')
+    parser.add_argument('--wandb_project', type=str, default='smows', help='[Override] WandB project name')
     parser.add_argument('--skip_pretrain', action='store_true', default=False, help='Skip pretraining')
 
     args = parser.parse_args()
@@ -364,7 +364,7 @@ Examples:
             'seed': 0,
             'device': 'cuda:0',
             'use_wandb': True,
-            'wandb_project': 'SpaFusion',
+            'wandb_project': 'smows',
             'weight_list': [1, 1, 1, 1, 1, 1],
         }
     

@@ -1,4 +1,4 @@
-# 如何通过修改 config.py 改变 SpaFusion 运行行为
+# 如何通过修改 config.py 改变 smows 运行行为
 
 ## ✅ 确认：真正使用了模块化结构
 
