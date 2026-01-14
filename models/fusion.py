@@ -123,10 +123,10 @@ class GCNAutoencoder(nn.Module):
             output_dim=input_dim2
         )
 
-        # Fusion parameters
-        self.a = Parameter(nn.init.constant_(torch.zeros(n_node, 20), 0.5), requires_grad=True)
-        self.b = Parameter(nn.init.constant_(torch.zeros(n_node, 20), 0.5), requires_grad=True)
-        self.c = Parameter(nn.init.constant_(torch.zeros(n_node, 20), 0.5), requires_grad=True)
+        # Fusion parameters - CRITICAL: Must match latent_dim!
+        self.a = Parameter(nn.init.constant_(torch.zeros(n_node, latent_dim), 0.5), requires_grad=True)
+        self.b = Parameter(nn.init.constant_(torch.zeros(n_node, latent_dim), 0.5), requires_grad=True)
+        self.c = Parameter(nn.init.constant_(torch.zeros(n_node, latent_dim), 0.5), requires_grad=True)
         self.alpha = Parameter(torch.zeros(1))
 
         # Clustering parameters
