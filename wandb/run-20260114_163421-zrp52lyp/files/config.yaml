@@ -1,0 +1,178 @@
+_wandb:
+    value:
+        cli_version: 0.24.0
+        e:
+            da693yyn0bmqkm0t8gys08inv3ypqfwk:
+                codePath: main.py
+                codePathLocal: main.py
+                cpu_count: 40
+                cpu_count_logical: 80
+                cudaVersion: "12.2"
+                disk:
+                    /:
+                        total: "24002451300352"
+                        used: "23049603379200"
+                email: 2923203418@qq.com
+                executable: /mnt/data0/Miniconda3/envs/xhb4bio/bin/python
+                git:
+                    commit: fe53d5c4bbff49916aa6c2faa111500911dd9c87
+                    remote: https://github.com/Kyochilian/smows
+                gpu: NVIDIA GeForce RTX 3090
+                gpu_count: 8
+                gpu_nvidia:
+                    - architecture: Ampere
+                      cudaCores: 10496
+                      memoryTotal: "25769803776"
+                      name: NVIDIA GeForce RTX 3090
+                      uuid: GPU-11a983e6-bda3-d579-1e7c-83bc3d720e3c
+                    - architecture: Ampere
+                      cudaCores: 10496
+                      memoryTotal: "25769803776"
+                      name: NVIDIA GeForce RTX 3090
+                      uuid: GPU-6e2fc3ec-51ed-7715-b48b-0015b351ff39
+                    - architecture: Ampere
+                      cudaCores: 10496
+                      memoryTotal: "25769803776"
+                      name: NVIDIA GeForce RTX 3090
+                      uuid: GPU-9239c4d4-6675-ef9a-b0f1-7590237aa8c8
+                    - architecture: Ampere
+                      cudaCores: 10496
+                      memoryTotal: "25769803776"
+                      name: NVIDIA GeForce RTX 3090
+                      uuid: GPU-b7df025f-6530-11be-c4b4-191a6f50242c
+                    - architecture: Ampere
+                      cudaCores: 10496
+                      memoryTotal: "25769803776"
+                      name: NVIDIA GeForce RTX 3090
+                      uuid: GPU-f9d907d7-1e20-cd51-3d8a-860e4ccf1c4e
+                    - architecture: Ampere
+                      cudaCores: 10496
+                      memoryTotal: "25769803776"
+                      name: NVIDIA GeForce RTX 3090
+                      uuid: GPU-47910d88-d908-076b-97e4-5d9a7fbfd225
+                    - architecture: Ampere
+                      cudaCores: 10496
+                      memoryTotal: "25769803776"
+                      name: NVIDIA GeForce RTX 3090
+                      uuid: GPU-b7171c26-ffe1-d5b4-4c85-3bca43821373
+                    - architecture: Ampere
+                      cudaCores: 10496
+                      memoryTotal: "25769803776"
+                      name: NVIDIA GeForce RTX 3090
+                      uuid: GPU-d04b59a8-79fa-6f12-d3e6-5b0279f2f214
+                host: 3b3f39a1e84d
+                memory:
+                    total: "270087094272"
+                os: Linux-5.4.0-216-generic-x86_64-with-glibc2.31
+                program: /mnt/data0/xhb/smows/main.py
+                python: CPython 3.10.14
+                root: /mnt/data0/xhb/smows
+                startedAt: "2026-01-14T08:34:21.708755Z"
+                writerId: da693yyn0bmqkm0t8gys08inv3ypqfwk
+        m: []
+        python_version: 3.10.14
+        t:
+            "1":
+                - 1
+                - 5
+                - 53
+                - 54
+                - 100
+            "2":
+                - 1
+                - 5
+                - 53
+                - 54
+                - 100
+            "3":
+                - 2
+                - 13
+                - 16
+                - 62
+            "4": 3.10.14
+            "5": 0.24.0
+            "10":
+                - 20
+            "12": 0.24.0
+            "13": linux-x86_64
+adj_dir:
+    value: ./pre_adj
+adj_k:
+    value: 20
+data_path:
+    value: ./data/
+dec_dim1:
+    value: 128
+dec_dim2:
+    value: 256
+device:
+    value: cpu
+dropout:
+    value: 0.1
+enc_dim1:
+    value: 256
+enc_dim2:
+    value: 128
+has_labels:
+    value: true
+label_file:
+    value: D1_annotation_labels.csv
+lambda1:
+    value: 1
+lambda2:
+    value: 0.1
+latent_dim:
+    value: 20
+lr:
+    value: 0.002
+name:
+    value: D1
+num_heads1:
+    value: 1
+num_heads2:
+    value: 1
+num_layers:
+    value: 2
+num_runs:
+    value: 10
+paper_metrics:
+    value:
+        ACC: 0.599
+        AMI: 0.379
+        ARI: 0.351
+        F1: 0.323
+        NMI: 0.384
+pretrain_dir:
+    value: ./pretrain
+pretrain_epoch:
+    value: 10000
+protein_file:
+    value: adata_ADT.h5ad
+result_dir:
+    value: ./results
+rna_file:
+    value: adata_RNA.h5ad
+seed:
+    value: 0
+skip_pretrain:
+    value: false
+spatial_k:
+    value: 9
+train_epoch:
+    value: 300
+use_wandb:
+    value: true
+view1:
+    value: RNA
+view2:
+    value: Protein
+wandb_project:
+    value: smows
+weight_list:
+    value:
+        - 1
+        - 1
+        - 1
+        - 1
+        - 1
+        - 1
