@@ -6,5 +6,10 @@ __pycache__
 *.pt
 *.pth
 *.pkl
+*.pyc
 results/
 temp.py
+.ruff_cache/
+*.wandb
+.wandb/
+.torchtext/

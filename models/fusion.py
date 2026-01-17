@@ -11,6 +11,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Parameter
+from typing import Optional
 
 from .gcn import GCNEncoder, GCNDecoder
 from .transformer import TransformerEncoder, TransformerDecoder
@@ -18,19 +19,25 @@ from .transformer import TransformerEncoder, TransformerDecoder
 
 class q_distribution(nn.Module):
     """Q-distribution for clustering"""
-    
+
     def __init__(self, centers):
         super(q_distribution, self).__init__()
         self.cluster_centers = centers
 
     def forward(self, z, z1, z2):
-        q = 1.0 / (1.0 + torch.sum(torch.pow(z.unsqueeze(1) - self.cluster_centers, 2), 2))
+        q = 1.0 / (
+            1.0 + torch.sum(torch.pow(z.unsqueeze(1) - self.cluster_centers, 2), 2)
+        )
         q = (q.t() / torch.sum(q, 1)).t()
 
-        q1 = 1.0 / (1.0 + torch.sum(torch.pow(z1.unsqueeze(1) - self.cluster_centers, 2), 2))
+        q1 = 1.0 / (
+            1.0 + torch.sum(torch.pow(z1.unsqueeze(1) - self.cluster_centers, 2), 2)
+        )
         q1 = (q1.t() / torch.sum(q1, 1)).t()
 
-        q2 = 1.0 / (1.0 + torch.sum(torch.pow(z2.unsqueeze(1) - self.cluster_centers, 2), 2))
+        q2 = 1.0 / (
+            1.0 + torch.sum(torch.pow(z2.unsqueeze(1) - self.cluster_centers, 2), 2)
+        )
         q2 = (q2.t() / torch.sum(q2, 1)).t()
 
         return [q, q1, q2]
@@ -39,20 +46,34 @@ class q_distribution(nn.Module):
 class GCNAutoencoder(nn.Module):
     """
     smows Main Model
-    A multi-level fusion model combining GCN and Transformer for spatial multi-omics data
+    A multi-level fusion model combining GCN and Transformer for spatial multi-omics data.
     """
-    
-    def __init__(self, input_dim1, input_dim2, enc_dim1, enc_dim2, dec_dim1, dec_dim2, latent_dim, dropout,
-                 num_layers, num_heads1, num_heads2, n_clusters, n_node=None):
+
+    def __init__(
+        self,
+        input_dim1: int,
+        input_dim2: int,
+        enc_dim1: int,
+        enc_dim2: int,
+        dec_dim1: int,
+        dec_dim2: int,
+        latent_dim: int,
+        dropout: float,
+        num_layers: int,
+        num_heads1: int,
+        num_heads2: int,
+        n_clusters: int,
+        n_node: Optional[int] = None,
+    ):
         super(GCNAutoencoder, self).__init__()
-        
+
         # View 1 (e.g., RNA) Encoders
         self.encoder_view1 = GCNEncoder(
             input_dim=input_dim1,
             enc_dim1=enc_dim1,
             enc_dim2=enc_dim2,
             latent_dim=latent_dim,
-            dropout=dropout
+            dropout=dropout,
         )
 
         # View 2 (e.g., Protein) Encoders
@@ -61,7 +82,7 @@ class GCNAutoencoder(nn.Module):
             enc_dim1=enc_dim1,
             enc_dim2=enc_dim2,
             latent_dim=latent_dim,
-            dropout=dropout
+            dropout=dropout,
         )
 
         # Transformer Encoder for View 1
@@ -72,7 +93,7 @@ class GCNAutoencoder(nn.Module):
             heads=num_heads1,
             forward_expansion=num_heads1,
             dropout=dropout,
-            max_length=25000
+            max_length=25000,
         )
 
         # Transformer Encoder for View 2
@@ -83,29 +104,32 @@ class GCNAutoencoder(nn.Module):
             heads=num_heads1,
             forward_expansion=num_heads1,
             dropout=dropout,
-            max_length=25000
+            max_length=25000,
         )
+
+        decoder_heads1 = num_heads1 if latent_dim % num_heads1 == 0 else 1
+        decoder_heads2 = num_heads2 if latent_dim % num_heads2 == 0 else 1
 
         # Transformer Decoder for View 1
         self.trans_decoder1 = TransformerDecoder(
             input_size=input_dim1,
             embed_size=latent_dim,
             num_layers=num_layers,
-            heads=num_heads1,
-            forward_expansion=num_heads1,
+            heads=decoder_heads1,
+            forward_expansion=decoder_heads1,
             dropout=dropout,
-            max_length=25000
+            max_length=25000,
         )
-        
+
         # Transformer Decoder for View 2
         self.trans_decoder2 = TransformerDecoder(
             input_size=input_dim2,
             embed_size=latent_dim,
             num_layers=num_layers,
-            heads=num_heads2,
-            forward_expansion=num_heads2,
+            heads=decoder_heads2,
+            forward_expansion=decoder_heads2,
             dropout=dropout,
-            max_length=25000
+            max_length=25000,
         )
 
         # GCN Decoders
@@ -113,24 +137,34 @@ class GCNAutoencoder(nn.Module):
             latent_dim=latent_dim,
             dec_dim1=dec_dim1,
             dec_dim2=dec_dim2,
-            output_dim=input_dim1
+            output_dim=input_dim1,
         )
 
         self.decoder_view2 = GCNDecoder(
             latent_dim=latent_dim,
             dec_dim1=dec_dim1,
             dec_dim2=dec_dim2,
-            output_dim=input_dim2
+            output_dim=input_dim2,
         )
 
         # Fusion parameters - CRITICAL: Must match latent_dim!
-        self.a = Parameter(nn.init.constant_(torch.zeros(n_node, latent_dim), 0.5), requires_grad=True)
-        self.b = Parameter(nn.init.constant_(torch.zeros(n_node, latent_dim), 0.5), requires_grad=True)
-        self.c = Parameter(nn.init.constant_(torch.zeros(n_node, latent_dim), 0.5), requires_grad=True)
+        # n_node must be provided
+        assert n_node is not None, "n_node must be provided"
+        self.a = Parameter(
+            nn.init.constant_(torch.zeros(n_node, latent_dim), 0.5), requires_grad=True
+        )
+        self.b = Parameter(
+            nn.init.constant_(torch.zeros(n_node, latent_dim), 0.5), requires_grad=True
+        )
+        self.c = Parameter(
+            nn.init.constant_(torch.zeros(n_node, latent_dim), 0.5), requires_grad=True
+        )
         self.alpha = Parameter(torch.zeros(1))
 
         # Clustering parameters
-        self.cluster_centers1 = Parameter(torch.Tensor(n_clusters, latent_dim), requires_grad=True)
+        self.cluster_centers1 = Parameter(
+            torch.Tensor(n_clusters, latent_dim), requires_grad=True
+        )
         torch.nn.init.xavier_normal_(self.cluster_centers1.data)
         self.q_distribution1 = q_distribution(self.cluster_centers1)
 
@@ -140,8 +174,7 @@ class GCNAutoencoder(nn.Module):
 
         # Latent processing
         self.latent_process = nn.Sequential(
-            nn.Linear(latent_dim, latent_dim),
-            nn.Linear(latent_dim, latent_dim)
+            nn.Linear(latent_dim, latent_dim), nn.Linear(latent_dim, latent_dim)
         )
 
     def emb_fusion(self, adj, z_1, z_2, z_3):
@@ -162,7 +195,7 @@ class GCNAutoencoder(nn.Module):
     def forward(self, x1, adj1, adj2, x2, adj3, adj4, Mt1, Mt2, pretrain=False):
         """
         Forward pass
-        
+
         Args:
             x1: View 1 features (e.g., RNA)
             adj1: View 1 spatial adjacency
@@ -173,7 +206,7 @@ class GCNAutoencoder(nn.Module):
             Mt1: View 1 high-order graph
             Mt2: View 2 high-order graph
             pretrain: Whether in pretraining mode
-        
+
         Returns:
             Z: Fused embedding
             z1_tilde: View 1 fused embedding
@@ -218,14 +251,24 @@ class GCNAutoencoder(nn.Module):
         a11_hat = z_adj1 + adj1_hat
         x12_hat, adj2_hat = self.decoder_view1(z12, adj2)
         a12_hat = z_adj2 + adj2_hat
-        x13_hat = self.trans_decoder1(x=z1_tilde.unsqueeze(0), enc_out=z1_tilde.unsqueeze(0), src_mask=None, trg_mask=None)
+        x13_hat = self.trans_decoder1(
+            x=z1_tilde.unsqueeze(0),
+            enc_out=z1_tilde.unsqueeze(0),
+            src_mask=None,
+            trg_mask=None,
+        )
         x13_hat = x13_hat.squeeze(0)
 
         x21_hat, adj3_hat = self.decoder_view2(z21, adj3)
         a21_hat = z_adj3 + adj3_hat
         x22_hat, adj4_hat = self.decoder_view2(z22, adj4)
         a22_hat = z_adj4 + adj4_hat
-        x23_hat = self.trans_decoder2(x=z2_tilde.unsqueeze(0), enc_out=z2_tilde.unsqueeze(0), src_mask=None, trg_mask=None)
+        x23_hat = self.trans_decoder2(
+            x=z2_tilde.unsqueeze(0),
+            enc_out=z2_tilde.unsqueeze(0),
+            src_mask=None,
+            trg_mask=None,
+        )
         x23_hat = x23_hat.squeeze(0)
 
         # Clustering (only during training)
@@ -234,7 +277,18 @@ class GCNAutoencoder(nn.Module):
         else:
             Q = self.q_distribution1(Z, z1_tilde, z2_tilde)
 
-        return Z, z1_tilde, z2_tilde, a11_hat, a12_hat, a21_hat, a22_hat, x13_hat, x23_hat, Q
+        return (
+            Z,
+            z1_tilde,
+            z2_tilde,
+            a11_hat,
+            a12_hat,
+            a21_hat,
+            a22_hat,
+            x13_hat,
+            x23_hat,
+            Q,
+        )
 
 
 # Alias for backward compatibility
