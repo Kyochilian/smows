@@ -12,12 +12,6 @@ from torch.nn import Parameter
 import numpy as np
 
 
-def adj_mm(adj, x):
-    if getattr(adj, "is_sparse", False):
-        return torch.sparse.mm(adj, x)
-    return torch.matmul(adj, x)
-
-
 class GraphConvolutionLayer(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(GraphConvolutionLayer, self).__init__()
@@ -30,7 +24,7 @@ class GraphConvolutionLayer(nn.Module):
             support = self.act(torch.mm(x, self.weight))
         else:
             support = torch.mm(x, self.weight)
-        output = adj_mm(adj, support)
+        output = torch.sparse.mm(adj, support) if adj.is_sparse else torch.mm(adj, support)
         return output
 
 
@@ -131,27 +125,16 @@ class trans_encoder(nn.Module):
         super(trans_encoder, self).__init__()
         self.embed_size = embed_size
         self.position_embedding = nn.Embedding(max_length, embed_size)
-        self.coord_proj = nn.Sequential(
-            nn.Linear(2, embed_size),
-            nn.ReLU(),
-            nn.Linear(embed_size, embed_size),
-        )
         self.layers = nn.ModuleList(
             [EncoderLayer(embed_size, heads, forward_expansion, dropout) for _ in range(num_layers)]
         )
         self.linear = nn.Linear(embed_size, laten_size)
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, x, mask, coords=None):
+    def forward(self, x, mask):
         N, seq_length, _ = x.shape
-        if coords is not None:
-            if coords.dim() == 2:
-                coords = coords.unsqueeze(0)
-            x = x + self.coord_proj(coords.to(x.device))
-        else:
-            positions = torch.arange(0, seq_length).expand(N, seq_length).to(x.device)
-            x = x + self.position_embedding(positions)
-        x = self.dropout(x)
+        positions = torch.arange(0, seq_length).expand(N, seq_length).to(x.device)
+        x = self.dropout((x + self.position_embedding(positions)))
         for layer in self.layers:
             x = layer(x, mask)
         x = self.linear(x)
@@ -183,27 +166,16 @@ class trans_decoder(nn.Module):
         super(trans_decoder, self).__init__()
         self.embed_size = embed_size
         self.position_embedding = nn.Embedding(max_length, embed_size)
-        self.coord_proj = nn.Sequential(
-            nn.Linear(2, embed_size),
-            nn.ReLU(),
-            nn.Linear(embed_size, embed_size),
-        )
         self.layers = nn.ModuleList(
             [DecoderLayer(embed_size, heads, forward_expansion, dropout) for _ in range(num_layers)]
         )
         self.linear = nn.Linear(embed_size, input_size)
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, x, enc_out, src_mask, trg_mask, coords=None):
+    def forward(self, x, enc_out, src_mask, trg_mask):
         N, seq_length, _ = x.shape
-        if coords is not None:
-            if coords.dim() == 2:
-                coords = coords.unsqueeze(0)
-            x = x + self.coord_proj(coords.to(x.device))
-        else:
-            positions = torch.arange(0, seq_length).expand(N, seq_length).to(x.device)
-            x = x + self.position_embedding(positions)
-        x = self.dropout(x)
+        positions = torch.arange(0, seq_length).expand(N, seq_length).to(x.device)
+        x = self.dropout((x + self.position_embedding(positions)))
         for layer in self.layers:
             x = layer(x, enc_out, enc_out, src_mask, trg_mask)
         x = self.linear(x)
@@ -230,12 +202,17 @@ class q_distribution(nn.Module):
 
 class GCNAutoencoder(nn.Module):
     def __init__(self, input_dim1, input_dim2, enc_dim1, enc_dim2, dec_dim1, dec_dim2, latent_dim, dropout,
-                 num_layers, num_heads1, num_heads2, n_clusters, n_node=None, fusion_mode="cell_gate",
-                 ms_depth=3, ms_dims=None, ms_reducer="mlp", ms_use_adj=True, ms_adj_type="mixed"):
+                 num_layers, num_heads1, num_heads2, n_clusters, n_node=None,
+                 fusion_mode='variance', ms_depth=3, ms_dims=None, ms_reducer='mlp', ms_use_adj=True, ms_adj_type='mixed',
+                 **kwargs):
         super(GCNAutoencoder, self).__init__()
         self.fusion_mode = fusion_mode
+        self.ms_depth = ms_depth
+        self.ms_dims = ms_dims
+        self.ms_reducer = ms_reducer
         self.ms_use_adj = ms_use_adj
         self.ms_adj_type = ms_adj_type
+
         self.encoder_view1 = GCNEncoder(
             input_dim=input_dim1,
             enc_dim1=enc_dim1,
@@ -306,19 +283,6 @@ class GCNAutoencoder(nn.Module):
         self.c = Parameter(nn.init.constant_(torch.zeros(n_node, latent_dim), 0.5), requires_grad=True)
         self.alpha = Parameter(torch.zeros(1))
 
-        self.fusion_pos = nn.Sequential(
-            nn.Linear(2, latent_dim),
-            nn.ReLU(),
-            nn.Linear(latent_dim, latent_dim),
-        )
-        self.fusion_gate = nn.Sequential(
-            nn.Linear(latent_dim * 3, latent_dim),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(latent_dim, 2),
-        )
-        self.fusion_beta = Parameter(torch.zeros(1))
-
         self.cluster_centers1 = Parameter(torch.Tensor(n_clusters, latent_dim), requires_grad=True)
         torch.nn.init.xavier_normal_(self.cluster_centers1.data)
         self.q_distribution1 = q_distribution(self.cluster_centers1)
@@ -331,6 +295,13 @@ class GCNAutoencoder(nn.Module):
             nn.Linear(latent_dim, latent_dim)
         )
 
+        self.cell_gate = nn.Sequential(
+            nn.Linear(latent_dim * 2, latent_dim),
+            nn.ReLU(),
+            nn.Linear(latent_dim, 1),
+            nn.Sigmoid()
+        )
+
     def emb_fusion(self, adj, z_1, z_2, z_3):
         total = self.a + self.b + self.c
         a_normalized = self.a / total
@@ -338,12 +309,23 @@ class GCNAutoencoder(nn.Module):
         c_normalized = self.c / total
 
         z_i = a_normalized * z_1 + b_normalized * z_2 + c_normalized * z_3
-        z_l = adj_mm(adj, z_i)
+        z_l = torch.sparse.mm(adj, z_i) if adj.is_sparse else torch.mm(adj, z_i)
         s = torch.mm(z_l, z_l.t())
         s = F.softmax(s, dim=1)
         z_g = torch.mm(s, z_l)
         z_tilde = self.alpha * z_g + z_l
         return z_tilde
+
+    def fuse_modalities(self, z1_tilde, z2_tilde):
+        if self.fusion_mode in ('cell_gate', 'multiscale_unet'):
+            gate = self.cell_gate(torch.cat([z1_tilde, z2_tilde], dim=1))
+            return gate * z1_tilde + (1.0 - gate) * z2_tilde, torch.cat([gate, 1.0 - gate], dim=1)
+
+        w1 = torch.var(z1_tilde)
+        w2 = torch.var(z2_tilde)
+        a1 = w1 / (w1 + w2)
+        a2 = 1 - a1
+        return torch.add(z1_tilde * a1, z2_tilde * a2), None
 
     def forward(self, x1, adj1, adj2, x2, adj3, adj4, Mt1, Mt2, coords=None, pretrain=False):
         # ==============GAE + trans + GAE ============
@@ -352,13 +334,12 @@ class GCNAutoencoder(nn.Module):
 
         z11, z_adj1 = self.encoder_view1(x1, adj1)
         z12, z_adj2 = self.encoder_view1(x1, adj2)
-        coords_b = coords.unsqueeze(0) if coords is not None else None
-        z13 = self.trans_encoder1(x1.unsqueeze(0), mask=None, coords=coords_b)
+        z13 = self.trans_encoder1(x1.unsqueeze(0), mask=None)
         z13 = z13.squeeze(0)
 
         z21, z_adj3 = self.encoder_view2(x2, adj3)
         z22, z_adj4 = self.encoder_view2(x2, adj4)
-        z23 = self.trans_encoder2(x2.unsqueeze(0), mask=None, coords=coords_b)
+        z23 = self.trans_encoder2(x2.unsqueeze(0), mask=None)
         z23 = z23.squeeze(0)
 
         z1_tilde = self.emb_fusion(adj2, z11, z12, z13)
@@ -367,44 +348,26 @@ class GCNAutoencoder(nn.Module):
         z1_tilde = self.latent_process(z1_tilde)
         z2_tilde = self.latent_process(z2_tilde)
 
-        gates = None
-        if self.fusion_mode == "cell_gate":
-            if coords is None:
-                pos = torch.zeros_like(z1_tilde)
-            else:
-                pos = self.fusion_pos(coords.to(z1_tilde.device))
-            logits = self.fusion_gate(torch.cat([z1_tilde, z2_tilde, pos], dim=1))
-            gates = F.softmax(logits, dim=1)
-            Z = gates[:, 0:1] * z1_tilde + gates[:, 1:2] * z2_tilde
-            if self.ms_use_adj:
-                fusion_adj = 0.5 * (adj1 + adj3)
-                Z = Z + self.fusion_beta * adj_mm(fusion_adj, Z)
-        elif self.fusion_mode == "variance":
-            w1 = torch.var(z1_tilde)
-            w2 = torch.var(z2_tilde)
-            a1 = w1 / (w1 + w2)
-            a2 = 1 - a1
-            Z = torch.add(z1_tilde * a1, z2_tilde * a2)
-        else:
-            raise ValueError(f"Unknown fusion_mode: {self.fusion_mode}")
+        Z, gates = self.fuse_modalities(z1_tilde, z2_tilde)
 
         # ==== decoder ===
         x11_hat, adj1_hat = self.decoder_view1(z11, adj1)
         a11_hat = z_adj1 + adj1_hat
         x12_hat, adj2_hat = self.decoder_view1(z12, adj2)
         a12_hat = z_adj2 + adj2_hat
-        x13_hat = self.trans_decoder1(x=z1_tilde.unsqueeze(0), enc_out=z1_tilde.unsqueeze(0), src_mask=None, trg_mask=None, coords=coords_b)
+        x13_hat = self.trans_decoder1(x=z1_tilde.unsqueeze(0), enc_out=z1_tilde.unsqueeze(0), src_mask=None, trg_mask=None)
         x13_hat = x13_hat.squeeze(0)
 
         x21_hat, adj3_hat = self.decoder_view2(z21, adj3)
         a21_hat = z_adj3 + adj3_hat
         x22_hat, adj4_hat = self.decoder_view2(z22, adj4)
         a22_hat = z_adj4 + adj4_hat
-        x23_hat = self.trans_decoder2(x=z2_tilde.unsqueeze(0), enc_out=z2_tilde.unsqueeze(0), src_mask=None, trg_mask=None, coords=coords_b)
+        x23_hat = self.trans_decoder2(x=z2_tilde.unsqueeze(0), enc_out=z2_tilde.unsqueeze(0), src_mask=None, trg_mask=None)
         x23_hat = x23_hat.squeeze(0)
 
         if pretrain:
             Q = None
+            gates = None
         else:
             Q = self.q_distribution1(Z, z1_tilde, z2_tilde)
 

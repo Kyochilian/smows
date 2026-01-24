@@ -387,7 +387,8 @@ def main():
             x1=data1, x2=data2,
             spatial_adj1=spatial_adj1, feature_adj1=feature_adj1,
             spatial_adj2=spatial_adj2, feature_adj2=feature_adj2,
-            Mt1=Mt1, Mt2=Mt2, coords=coords,
+            Mt1=Mt1, Mt2=Mt2,
+            coords=coords,
             y=label, n_clusters=n_clusters,
             num_epoch=opt.args.train_epoch,
             lambda1=opt.args.lambda1,
@@ -499,14 +500,14 @@ def main():
     try:
         from visualize_spatial import plot_combined_visualizations, plot_modality_weights
         import scanpy as sc
-        
+
         adata_vis = adata_omics1.copy()
         if best_overall_Z is not None:
             adata_vis.obsm['X_emb'] = best_overall_Z.data.cpu().numpy()
         if best_overall_pred is not None:
             adata_vis.obs['SpaFusion'] = best_overall_pred.astype(str)
             adata_vis.obs['SpaFusion'] = adata_vis.obs['SpaFusion'].astype('category')
-        
+
         plot_combined_visualizations(adata_vis, key='SpaFusion', save_dir=run_dir, prefix='SpaFusion')
         adata_vis.write(os.path.join(run_dir, 'spafusion_results.h5ad'))
         print(f"Saved AnnData with results to: {os.path.join(run_dir, 'spafusion_results.h5ad')}")
@@ -521,10 +522,6 @@ def main():
     # Close log capture
     sys.stdout = tee.terminal
     tee.close()
-
-
-if __name__ == "__main__":
-    main()
     print(f"Training log saved to: {log_path}")
 
 

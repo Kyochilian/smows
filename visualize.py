@@ -535,19 +535,53 @@ def plot_sorted_similarity_comparison(similarity, predictions, ground_truth, sav
     
     # 统一标签从0开始
     pred_adjusted = predictions - predictions.min()
+
+    def cosine_similarity_matrix(x):
+        x = np.asarray(x)
+        x = x.astype(np.float32, copy=False)
+        norms = np.linalg.norm(x, axis=1, keepdims=True)
+        norms = np.maximum(norms, 1e-12)
+        x = x / norms
+        return x @ x.T
+
+    def prepare_sorted_heatmap_data(order_idx, sorted_labels):
+        sim = np.asarray(similarity)
+        if sim.ndim != 2:
+            raise ValueError(f"Expected 2D similarity/embedding matrix, got shape {sim.shape}")
+
+        n = len(sorted_labels)
+        is_square = sim.shape[0] == sim.shape[1]
+        is_sample_aligned = sim.shape[0] == n
+
+        if is_square and sim.shape[0] >= int(order_idx.max()) + 1:
+            sim_sorted = sim[order_idx][:, order_idx]
+            labels_sorted = sorted_labels
+            if sim_sorted.shape[0] > max_samples:
+                step = sim_sorted.shape[0] // max_samples
+                return sim_sorted[::step, ::step], labels_sorted[::step]
+            return sim_sorted, labels_sorted
+
+        if is_sample_aligned:
+            if sim.shape[0] > max_samples:
+                step = sim.shape[0] // max_samples
+                order_idx_plot = order_idx[::step]
+                labels_plot = sorted_labels[::step]
+            else:
+                order_idx_plot = order_idx
+                labels_plot = sorted_labels
+            emb_plot = sim[order_idx_plot]
+            return cosine_similarity_matrix(emb_plot), labels_plot
+
+        raise ValueError(
+            f"Predictions length ({n}) does not match similarity shape {sim.shape}. "
+            "Expected (n,n) similarity or (n,d) embedding."
+        )
     
     # 按预测聚类排序
     sorted_idx_pred = np.argsort(pred_adjusted)
-    sorted_sim_pred = similarity[sorted_idx_pred][:, sorted_idx_pred]
     sorted_pred = pred_adjusted[sorted_idx_pred]
-    
-    if sorted_sim_pred.shape[0] > max_samples:
-        step = sorted_sim_pred.shape[0] // max_samples
-        sorted_sim_pred_plot = sorted_sim_pred[::step, ::step]
-        sorted_pred_plot = sorted_pred[::step]
-    else:
-        sorted_sim_pred_plot = sorted_sim_pred
-        sorted_pred_plot = sorted_pred
+
+    sorted_sim_pred_plot, sorted_pred_plot = prepare_sorted_heatmap_data(sorted_idx_pred, sorted_pred)
     
     sns.heatmap(sorted_sim_pred_plot, cmap='viridis', ax=axes[0],
                 xticklabels=False, yticklabels=False)
@@ -567,16 +601,9 @@ def plot_sorted_similarity_comparison(similarity, predictions, ground_truth, sav
     if ground_truth is not None:
         gt_adjusted = ground_truth - ground_truth.min()
         sorted_idx_gt = np.argsort(gt_adjusted)
-        sorted_sim_gt = similarity[sorted_idx_gt][:, sorted_idx_gt]
         sorted_gt = gt_adjusted[sorted_idx_gt]
-        
-        if sorted_sim_gt.shape[0] > max_samples:
-            step = sorted_sim_gt.shape[0] // max_samples
-            sorted_sim_gt_plot = sorted_sim_gt[::step, ::step]
-            sorted_gt_plot = sorted_gt[::step]
-        else:
-            sorted_sim_gt_plot = sorted_sim_gt
-            sorted_gt_plot = sorted_gt
+
+        sorted_sim_gt_plot, sorted_gt_plot = prepare_sorted_heatmap_data(sorted_idx_gt, sorted_gt)
         
         sns.heatmap(sorted_sim_gt_plot, cmap='viridis', ax=axes[1],
                     xticklabels=False, yticklabels=False)
