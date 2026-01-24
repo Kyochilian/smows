@@ -137,6 +137,87 @@ Results are saved in `./results/{dataset_name}/{timestamp}/`:
 - Latent embeddings
 - Spatial coordinates
 
+---
+
+## SpaFusion Integration
+
+This project includes a complete integration of the [SpaFusion](https://github.com/polarisChen/SpaFusion) network.
+
+### SpaFusion Usage
+
+#### Running SpaFusion on A1 Dataset:
+```bash
+python run_spafusion.py --name Human_Lymph_Node_A1
+```
+
+#### Running SpaFusion on D1 Dataset:
+```bash
+python run_spafusion.py --name Human_Lymph_Node_D1
+```
+
+#### Adjustable Hyperparameters:
+```bash
+python run_spafusion.py --name Human_Lymph_Node_D1 \
+    --seed 0 \
+    --spatial_k 9 \
+    --adj_k 20 \
+    --pretrain_epoch 5000 \
+    --train_epoch 2500 \
+    --lr 1e-3 \
+    --lambda1 1.0 \
+    --lambda2 0.1 \
+    --enc_dim1 256 \
+    --enc_dim2 128 \
+    --latent_dim 20 \
+    --dropout 0.1
+```
+
+#### All Available Options:
+```bash
+python run_spafusion.py --help
+```
+
+### SpaFusion Visualization
+
+Generate visualizations for SpaFusion results:
+```bash
+python visualize_spafusion.py --results_dir results/SpaFusion_Human_Lymph_Node_D1_YYYYMMDD_HHMMSS
+```
+
+### SpaFusion Project Structure
+```
+SpaMICS/
+├── spafusion/                    # SpaFusion core modules (DO NOT MODIFY)
+│   ├── __init__.py
+│   ├── encoder.py                # GCN + Transformer encoders
+│   ├── high_order_matrix.py      # High-order graph construction
+│   ├── spafusion_processing.py   # Data preprocessing
+│   ├── spafusion_utils.py        # Utility functions
+│   └── spafusion_evaluate.py     # Evaluation metrics
+├── run_spafusion.py              # Main SpaFusion training script
+├── spafusion_opt.py              # SpaFusion configuration/hyperparameters
+├── visualize_spafusion.py        # SpaFusion visualization
+└── pretrain/                     # Pretrained models directory
+```
+
+### SpaFusion Results Structure
+```
+results/SpaFusion_{dataset}_{timestamp}/
+├── summary.json            # Configuration and metrics
+├── training_log.txt        # Complete training log
+├── pretrain_model.pth      # Pretrained model weights
+├── pretrain_losses.npy     # Pretraining loss history
+├── best_model.pth          # Best model weights
+├── best_predictions.npy    # Best clustering predictions
+├── final_model.pth         # Final model weights
+├── final_predictions.npy   # Final clustering predictions
+├── latent_features.npy     # Latent representations
+├── train_losses.npy        # Training loss history
+└── pre_adj/                # Preprocessed adjacency matrices
+```
+
+---
+
 ## Evaluation Metrics
 
 The model reports:

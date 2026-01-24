@@ -1,15 +1,18 @@
 # -*- coding:utf-8 -*-
 """
-SpaFusion Encoder Module
-Author: polaris (original)
-Adapted for SpaMICS comparison experiments
+Author：polaris
+Data：2024年06月25日
+SpaFusion Encoder - Core network architecture (DO NOT MODIFY)
 """
 
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
 from torch.nn import Parameter
+from torch.nn.functional import normalize
 import numpy as np
+from torch.nn.modules.module import Module
+from torch.nn import Linear
 
 
 class GraphConvolutionLayer(nn.Module):
@@ -24,7 +27,7 @@ class GraphConvolutionLayer(nn.Module):
             support = self.act(torch.mm(x, self.weight))
         else:
             support = torch.mm(x, self.weight)
-        output = torch.sparse.mm(adj, support) if adj.is_sparse else torch.mm(adj, support)
+        output = torch.spmm(adj, support)
         return output
 
 
@@ -160,7 +163,7 @@ class DecoderLayer(nn.Module):
         out = self.transformer_block(query)
         return out
 
-
+ 
 class trans_decoder(nn.Module):
     def __init__(self, input_size, embed_size, num_layers, heads, forward_expansion, dropout, max_length):
         super(trans_decoder, self).__init__()
@@ -188,31 +191,22 @@ class q_distribution(nn.Module):
         self.cluster_centers = centers
 
     def forward(self, z, z1, z2):
-        q = 1.0 / (1.0 + torch.sum(torch.pow(z.unsqueeze(1) - self.cluster_centers, 2), 2))
-        q = (q.t() / torch.sum(q, 1)).t()
+            q = 1.0 / (1.0 + torch.sum(torch.pow(z.unsqueeze(1) - self.cluster_centers, 2), 2))
+            q = (q.t() / torch.sum(q, 1)).t()
 
-        q1 = 1.0 / (1.0 + torch.sum(torch.pow(z1.unsqueeze(1) - self.cluster_centers, 2), 2))
-        q1 = (q1.t() / torch.sum(q1, 1)).t()
+            q1 = 1.0 / (1.0 + torch.sum(torch.pow(z1.unsqueeze(1) - self.cluster_centers, 2), 2))
+            q1 = (q1.t() / torch.sum(q1, 1)).t()
 
-        q2 = 1.0 / (1.0 + torch.sum(torch.pow(z2.unsqueeze(1) - self.cluster_centers, 2), 2))
-        q2 = (q2.t() / torch.sum(q2, 1)).t()
+            q2 = 1.0 / (1.0 + torch.sum(torch.pow(z2.unsqueeze(1) - self.cluster_centers, 2), 2))
+            q2 = (q2.t() / torch.sum(q2, 1)).t()
 
-        return [q, q1, q2]
+            return [q, q1, q2]
 
 
 class GCNAutoencoder(nn.Module):
     def __init__(self, input_dim1, input_dim2, enc_dim1, enc_dim2, dec_dim1, dec_dim2, latent_dim, dropout,
-                 num_layers, num_heads1, num_heads2, n_clusters, n_node=None,
-                 fusion_mode='variance', ms_depth=3, ms_dims=None, ms_reducer='mlp', ms_use_adj=True, ms_adj_type='mixed',
-                 **kwargs):
+                 num_layers, num_heads1, num_heads2, n_clusters, n_node=None):
         super(GCNAutoencoder, self).__init__()
-        self.fusion_mode = fusion_mode
-        self.ms_depth = ms_depth
-        self.ms_dims = ms_dims
-        self.ms_reducer = ms_reducer
-        self.ms_use_adj = ms_use_adj
-        self.ms_adj_type = ms_adj_type
-
         self.encoder_view1 = GCNEncoder(
             input_dim=input_dim1,
             enc_dim1=enc_dim1,
@@ -278,9 +272,9 @@ class GCNAutoencoder(nn.Module):
             output_dim=input_dim2
         )
 
-        self.a = Parameter(nn.init.constant_(torch.zeros(n_node, latent_dim), 0.5), requires_grad=True)
-        self.b = Parameter(nn.init.constant_(torch.zeros(n_node, latent_dim), 0.5), requires_grad=True)
-        self.c = Parameter(nn.init.constant_(torch.zeros(n_node, latent_dim), 0.5), requires_grad=True)
+        self.a = Parameter(nn.init.constant_(torch.zeros(n_node, 20), 0.5), requires_grad=True)
+        self.b = Parameter(nn.init.constant_(torch.zeros(n_node, 20), 0.5), requires_grad=True)
+        self.c = Parameter(nn.init.constant_(torch.zeros(n_node, 20), 0.5), requires_grad=True)
         self.alpha = Parameter(torch.zeros(1))
 
         self.cluster_centers1 = Parameter(torch.Tensor(n_clusters, latent_dim), requires_grad=True)
@@ -295,13 +289,6 @@ class GCNAutoencoder(nn.Module):
             nn.Linear(latent_dim, latent_dim)
         )
 
-        self.cell_gate = nn.Sequential(
-            nn.Linear(latent_dim * 2, latent_dim),
-            nn.ReLU(),
-            nn.Linear(latent_dim, 1),
-            nn.Sigmoid()
-        )
-
     def emb_fusion(self, adj, z_1, z_2, z_3):
         total = self.a + self.b + self.c
         a_normalized = self.a / total
@@ -309,26 +296,14 @@ class GCNAutoencoder(nn.Module):
         c_normalized = self.c / total
 
         z_i = a_normalized * z_1 + b_normalized * z_2 + c_normalized * z_3
-        z_l = torch.sparse.mm(adj, z_i) if adj.is_sparse else torch.mm(adj, z_i)
+        z_l = torch.spmm(adj, z_i)
         s = torch.mm(z_l, z_l.t())
         s = F.softmax(s, dim=1)
         z_g = torch.mm(s, z_l)
         z_tilde = self.alpha * z_g + z_l
         return z_tilde
 
-    def fuse_modalities(self, z1_tilde, z2_tilde):
-        if self.fusion_mode in ('cell_gate', 'multiscale_unet'):
-            gate = self.cell_gate(torch.cat([z1_tilde, z2_tilde], dim=1))
-            return gate * z1_tilde + (1.0 - gate) * z2_tilde, torch.cat([gate, 1.0 - gate], dim=1)
-
-        w1 = torch.var(z1_tilde)
-        w2 = torch.var(z2_tilde)
-        a1 = w1 / (w1 + w2)
-        a2 = 1 - a1
-        return torch.add(z1_tilde * a1, z2_tilde * a2), None
-
-    def forward(self, x1, adj1, adj2, x2, adj3, adj4, Mt1, Mt2, coords=None, pretrain=False):
-        # ==============GAE + trans + GAE ============
+    def forward(self, x1, adj1, adj2, x2, adj3, adj4, Mt1, Mt2, pretrain=False):
         adj2 = self.k1 * adj2 + self.k2 * Mt1
         adj4 = self.k1 * adj4 + self.k2 * Mt2
 
@@ -348,9 +323,12 @@ class GCNAutoencoder(nn.Module):
         z1_tilde = self.latent_process(z1_tilde)
         z2_tilde = self.latent_process(z2_tilde)
 
-        Z, gates = self.fuse_modalities(z1_tilde, z2_tilde)
+        w1 = torch.var(z1_tilde)
+        w2 = torch.var(z2_tilde)
+        a1 = w1 / (w1 + w2)
+        a2 = 1 - a1
+        Z = torch.add(z1_tilde * a1, z2_tilde * a2)
 
-        # ==== decoder ===
         x11_hat, adj1_hat = self.decoder_view1(z11, adj1)
         a11_hat = z_adj1 + adj1_hat
         x12_hat, adj2_hat = self.decoder_view1(z12, adj2)
@@ -366,9 +344,7 @@ class GCNAutoencoder(nn.Module):
         x23_hat = x23_hat.squeeze(0)
 
         if pretrain:
-            Q = None
-            gates = None
+            return Z, z1_tilde, z2_tilde, a11_hat, a12_hat, a21_hat, a22_hat, x13_hat, x23_hat, None
         else:
             Q = self.q_distribution1(Z, z1_tilde, z2_tilde)
-
-        return Z, z1_tilde, z2_tilde, a11_hat, a12_hat, a21_hat, a22_hat, x13_hat, x23_hat, Q, gates
+            return Z, z1_tilde, z2_tilde, a11_hat, a12_hat, a21_hat, a22_hat, x13_hat, x23_hat, Q
