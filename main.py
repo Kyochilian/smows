@@ -117,14 +117,14 @@ def generate_visualizations(Z, y_pred, y_true, spatial_coords, result_dir, run_n
 
 
 def pre_train(x1, x2, spatial_adj1, feature_adj1, spatial_adj2, feature_adj2, Mt1, Mt2, y, n_clusters, num_epoch, device, weight_list, lr,
-              cross_fusion="var", moe_num_experts=4, moe_hidden_dim=128, moe_balance_weight=0.01,
-              emb_global_attn=1, emb_attn_mask=1, emb_attn_temp=1.0, emb_attn_dropout=0.0, emb_alpha_tanh=1):
+              cross_fusion="var", moe_num_experts=4, moe_hidden_dim=128, moe_gate_noise_mult=1.0, moe_balance_weight=0.01,
+              emb_global_attn=1, emb_attn_mask=1, emb_attn_temp=1.0, emb_attn_dropout=0.0, emb_alpha_tanh=1, emb_attn_sim="dot"):
     model = GCNAutoencoder(input_dim1=x1.shape[1], input_dim2=x2.shape[1], enc_dim1=256, enc_dim2=128, dec_dim1=128,
                            dec_dim2=256, latent_dim=20, dropout=0.1, num_layers=2, num_heads1=1, num_heads2=1,
-                           n_clusters=n_clusters, n_node=x1.shape[0], cross_fusion=cross_fusion,
-                           moe_num_experts=moe_num_experts, moe_hidden_dim=moe_hidden_dim,
-                           emb_global_attn=emb_global_attn, emb_attn_mask=emb_attn_mask, emb_attn_temp=emb_attn_temp,
-                           emb_attn_dropout=emb_attn_dropout, emb_alpha_tanh=emb_alpha_tanh)
+                            n_clusters=n_clusters, n_node=x1.shape[0], cross_fusion=cross_fusion,
+                            moe_num_experts=moe_num_experts, moe_hidden_dim=moe_hidden_dim, moe_gate_noise_mult=moe_gate_noise_mult,
+                            emb_global_attn=emb_global_attn, emb_attn_mask=emb_attn_mask, emb_attn_temp=emb_attn_temp,
+                            emb_attn_dropout=emb_attn_dropout, emb_alpha_tanh=emb_alpha_tanh, emb_attn_sim=emb_attn_sim)
 
     model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=lr)
@@ -164,20 +164,21 @@ def pre_train(x1, x2, spatial_adj1, feature_adj1, spatial_adj2, feature_adj2, Mt
 
 
 def train(x1, x2, spatial_adj1, feature_adj1, spatial_adj2, feature_adj2, Mt1, Mt2, y, n_clusters, num_epoch, lambda1, device, seed, lambda2, weight_list, lr, num, spatial_K, adj_K, result_dir,
-          cross_fusion="var", moe_num_experts=4, moe_hidden_dim=128, moe_balance_weight=0.01,
+          cross_fusion="var", moe_num_experts=4, moe_hidden_dim=128, moe_gate_noise_mult=1.0, moe_balance_weight=0.01,
           q_mix_alpha=0.2, q_mix_warmup=500,
           cluster_usage_weight=0.05,
           cluster_usage_mode="hinge",
-          emb_global_attn=1, emb_attn_mask=1, emb_attn_temp=1.0, emb_attn_dropout=0.0, emb_alpha_tanh=1,
+          center_sep_weight=0.0,
+          emb_global_attn=1, emb_attn_mask=1, emb_attn_temp=1.0, emb_attn_dropout=0.0, emb_alpha_tanh=1, emb_attn_sim="dot",
           select_best=1, best_metric="f1",
           dead_cluster_reinit=1, min_cluster_size=10, reinit_every=50, reinit_until=500,
           reinit_strategy="farthest"):
     model = GCNAutoencoder(input_dim1=x1.shape[1], input_dim2=x2.shape[1], enc_dim1=256, enc_dim2=128, dec_dim1=128,
                            dec_dim2=256, latent_dim=20, dropout=0.1, num_layers=2, num_heads1=1, num_heads2=1,
                            n_clusters=n_clusters, n_node=x1.shape[0], cross_fusion=cross_fusion,
-                           moe_num_experts=moe_num_experts, moe_hidden_dim=moe_hidden_dim,
-                           emb_global_attn=emb_global_attn, emb_attn_mask=emb_attn_mask, emb_attn_temp=emb_attn_temp,
-                           emb_attn_dropout=emb_attn_dropout, emb_alpha_tanh=emb_alpha_tanh)
+                            moe_num_experts=moe_num_experts, moe_hidden_dim=moe_hidden_dim, moe_gate_noise_mult=moe_gate_noise_mult,
+                            emb_global_attn=emb_global_attn, emb_attn_mask=emb_attn_mask, emb_attn_temp=emb_attn_temp,
+                            emb_attn_dropout=emb_attn_dropout, emb_alpha_tanh=emb_alpha_tanh, emb_attn_sim=emb_attn_sim)
     
     model.to(device)
 
@@ -235,6 +236,17 @@ def train(x1, x2, spatial_adj1, feature_adj1, spatial_adj2, feature_adj2, Mt1, M
 
         L_KL1 = distribution_loss(Q, target_distribution(Q[0].detach()), mix_alpha=cur_q_mix_alpha)
         loss = loss_rec + lambda1 * L_KL1 + lambda2 * (dense_loss1 + dense_loss2) + moe_balance_weight * balance_loss
+
+        # Encourage cluster centers to be well-separated (often improves ARI).
+        if center_sep_weight and center_sep_weight > 0:
+            C = F.normalize(model.cluster_centers1, dim=1, eps=1e-12)  # (K, D)
+            S = torch.mm(C, C.t())                                     # cosine sim (K, K)
+            eye = torch.eye(S.size(0), device=S.device, dtype=S.dtype)
+            S_off = S * (1.0 - eye)
+            denom = int(S.size(0)) * int(S.size(0) - 1)
+            if denom > 0:
+                L_sep = (S_off ** 2).sum() / float(denom)
+                loss = loss + center_sep_weight * L_sep
 
         # Prevent cluster collapse (macro-F1 killer on imbalanced labels):
         # Encourage every cluster to get non-trivial mass under Q0.
@@ -390,6 +402,7 @@ if __name__ == '__main__':
     parser.add_argument('--q_mix_alpha', type=float, default=0.2, help='mix weight for Q1/Q2 in KL loss (0=only Q0)')
     parser.add_argument('--q_mix_warmup', type=int, default=500, help='warmup epochs for q_mix_alpha ramp (0=off)')
     parser.add_argument('--cluster_usage_weight', type=float, default=0.05, help='weight for cluster-usage regularizer (prevents dead clusters)')
+    parser.add_argument('--center_sep_weight', type=float, default=0.0, help='weight for center-separation regularizer (cosine repulsion)')
     parser.add_argument('--select_best', type=int, default=1, help='save best epoch result by best_metric (1=on, 0=off)')
     parser.add_argument('--best_metric', type=str, default='f1', choices=['f1', 'acc', 'ari', 'nmi', 'ami', 'vms', 'fms', 'loss', 'f1acc'],
                         help='metric for selecting best epoch when select_best=1')
@@ -408,11 +421,14 @@ if __name__ == '__main__':
     parser.add_argument('--emb_attn_temp', type=float, default=1.0, help='temperature for emb attention (lower=sharper)')
     parser.add_argument('--emb_attn_dropout', type=float, default=0.0, help='dropout on emb attention weights')
     parser.add_argument('--emb_alpha_tanh', type=int, default=1, help='bound emb alpha with tanh (1=on, 0=off)')
+    parser.add_argument('--emb_attn_sim', type=str, default='dot', choices=['dot', 'cosine'],
+                        help='similarity for emb global attention: dot (legacy) or cosine')
 
     # cross-modal fusion ablation
     parser.add_argument('--cross_fusion', type=str, default='var', choices=['var', 'moe'], help='cross-modal fusion type')
     parser.add_argument('--moe_num_experts', type=int, default=4, help='number of experts for MoE cross fusion')
     parser.add_argument('--moe_hidden_dim', type=int, default=128, help='hidden dim for MoE experts/gate')
+    parser.add_argument('--moe_gate_noise_mult', type=float, default=1.0, help='multiplier for MoE gate noise std (lower=more stable routing)')
     parser.add_argument('--moe_balance_weight', type=float, default=0.01, help='weight for MoE load-balancing loss')
 
     opt = parser.parse_args()
@@ -447,11 +463,13 @@ if __name__ == '__main__':
     print("cross_fusion   : {}".format(opt.cross_fusion))
     print("moe_num_experts: {}".format(opt.moe_num_experts))
     print("moe_hidden_dim : {}".format(opt.moe_hidden_dim))
+    print("moe_gate_noise_mult: {}".format(opt.moe_gate_noise_mult))
     print("moe_balance_wt : {}".format(opt.moe_balance_weight))
     print("q_mix_alpha    : {}".format(opt.q_mix_alpha))
     print("q_mix_warmup   : {}".format(opt.q_mix_warmup))
     print("cluster_usage_wt: {}".format(opt.cluster_usage_weight))
     print("cluster_usage_mode: {}".format(opt.cluster_usage_mode))
+    print("center_sep_wt  : {}".format(opt.center_sep_weight))
     print("select_best    : {}".format(opt.select_best))
     print("best_metric    : {}".format(opt.best_metric))
     print("dead_reinit    : {}".format(opt.dead_cluster_reinit))
@@ -464,6 +482,7 @@ if __name__ == '__main__':
     print("emb_attn_temp  : {}".format(opt.emb_attn_temp))
     print("emb_attn_dropout: {}".format(opt.emb_attn_dropout))
     print("emb_alpha_tanh : {}".format(opt.emb_alpha_tanh))
+    print("emb_attn_sim   : {}".format(opt.emb_attn_sim))
     print("------------------------------")
     setup_seed(opt.seed)
 
@@ -542,9 +561,9 @@ if __name__ == '__main__':
         spatial_adj2=spatial_adj2, feature_adj2=feature_adj2, Mt1=Mt1, Mt2=Mt2, y=label, n_clusters=n_clusters,
         num_epoch=opt.pretrain_epoch, device=device, weight_list=opt.weight_list, lr=opt.lr,
         cross_fusion=opt.cross_fusion, moe_num_experts=opt.moe_num_experts, moe_hidden_dim=opt.moe_hidden_dim,
-        moe_balance_weight=opt.moe_balance_weight,
+        moe_gate_noise_mult=opt.moe_gate_noise_mult, moe_balance_weight=opt.moe_balance_weight,
         emb_global_attn=opt.emb_global_attn, emb_attn_mask=opt.emb_attn_mask, emb_attn_temp=opt.emb_attn_temp,
-        emb_attn_dropout=opt.emb_attn_dropout, emb_alpha_tanh=opt.emb_alpha_tanh,
+        emb_attn_dropout=opt.emb_attn_dropout, emb_alpha_tanh=opt.emb_alpha_tanh, emb_attn_sim=opt.emb_attn_sim,
     )
 
     metrics_dict = {'ACC': [], 'F1': [], 'NMI': [], 'ARI': [], 'AMI': [], 'VMS': [], 'FMS': []}
@@ -563,11 +582,13 @@ if __name__ == '__main__':
             device=device, seed=opt.seed, lambda2=opt.lambda2, weight_list=opt.weight_list, lr=opt.lr, num=i,
             spatial_K=opt.spatial_k, adj_K=opt.adj_k, result_dir=result_dir,
             cross_fusion=opt.cross_fusion, moe_num_experts=opt.moe_num_experts, moe_hidden_dim=opt.moe_hidden_dim,
+            moe_gate_noise_mult=opt.moe_gate_noise_mult,
             moe_balance_weight=opt.moe_balance_weight, q_mix_alpha=opt.q_mix_alpha, q_mix_warmup=opt.q_mix_warmup,
             cluster_usage_weight=opt.cluster_usage_weight,
             cluster_usage_mode=opt.cluster_usage_mode,
+            center_sep_weight=opt.center_sep_weight,
             emb_global_attn=opt.emb_global_attn, emb_attn_mask=opt.emb_attn_mask, emb_attn_temp=opt.emb_attn_temp,
-            emb_attn_dropout=opt.emb_attn_dropout, emb_alpha_tanh=opt.emb_alpha_tanh,
+            emb_attn_dropout=opt.emb_attn_dropout, emb_alpha_tanh=opt.emb_alpha_tanh, emb_attn_sim=opt.emb_attn_sim,
             select_best=opt.select_best, best_metric=opt.best_metric,
             dead_cluster_reinit=opt.dead_cluster_reinit, min_cluster_size=opt.min_cluster_size,
             reinit_every=opt.reinit_every, reinit_until=opt.reinit_until,

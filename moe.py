@@ -112,9 +112,10 @@ class DifferenceExpert(nn.Module):
 
 class MoEGate(nn.Module):
     """Routing gate with 4x rich features and optional noisy gating."""
-    def __init__(self, latent_dim: int, num_experts: int, hidden_dim: int = 128):
+    def __init__(self, latent_dim: int, num_experts: int, hidden_dim: int = 128, noise_scale_mult: float = 1.0):
         super().__init__()
         gate_input_dim = latent_dim * 4  # [z1, z2, z1*z2, |z1-z2|]
+        self.noise_scale_mult = float(noise_scale_mult)
         self.gate = nn.Sequential(
             nn.Linear(gate_input_dim, hidden_dim),
             nn.LayerNorm(hidden_dim),
@@ -132,7 +133,7 @@ class MoEGate(nn.Module):
         logits = self.gate(feat)
         if training:
             noise_std = F.softplus(self.noise_scale(feat)) + 1e-2
-            logits = logits + torch.randn_like(logits) * noise_std
+            logits = logits + torch.randn_like(logits) * (noise_std * self.noise_scale_mult)
         return F.softmax(logits, dim=-1)
 
 
@@ -149,7 +150,7 @@ class MoEFusion(nn.Module):
     """
 
     def __init__(self, z1_dim: int, z2_dim: int, expert_output_dim: int,
-                 num_experts: int = 4, hidden_dim: int = 128):
+                 num_experts: int = 4, hidden_dim: int = 128, gate_noise_mult: float = 1.0):
         super().__init__()
         assert z1_dim == z2_dim, "MoEFusion expects equal modality dims"
         latent_dim = z1_dim
@@ -161,7 +162,7 @@ class MoEFusion(nn.Module):
         self.expert2 = VarianceExpert(latent_dim, hidden_dim=hidden_dim // 2)
         self.expert3 = DifferenceExpert(latent_dim, hidden_dim=hidden_dim)
 
-        self.gate = MoEGate(latent_dim, num_experts, hidden_dim=hidden_dim)
+        self.gate = MoEGate(latent_dim, num_experts, hidden_dim=hidden_dim, noise_scale_mult=gate_noise_mult)
 
         self.out_proj = (
             nn.Linear(latent_dim, expert_output_dim)

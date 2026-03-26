@@ -218,11 +218,13 @@ class GCNAutoencoder(nn.Module):
         cross_fusion: str = "var",
         moe_num_experts: int = 4,
         moe_hidden_dim: int = 128,
+        moe_gate_noise_mult: float = 1.0,
         emb_global_attn: int = 1,
         emb_attn_mask: int = 1,
         emb_attn_temp: float = 1.0,
         emb_attn_dropout: float = 0.0,
         emb_alpha_tanh: int = 1,
+        emb_attn_sim: str = "dot",
     ):
         super(GCNAutoencoder, self).__init__()
         self.cross_fusion = cross_fusion
@@ -231,12 +233,16 @@ class GCNAutoencoder(nn.Module):
         self.emb_attn_temp = max(float(emb_attn_temp), 1e-6)
         self.emb_attn_dropout = float(emb_attn_dropout)
         self.emb_alpha_tanh = bool(emb_alpha_tanh)
+        self.emb_attn_sim = str(emb_attn_sim).lower()
+        if self.emb_attn_sim not in ("dot", "cosine"):
+            raise ValueError(f"emb_attn_sim must be one of ['dot','cosine'], got: {emb_attn_sim}")
         self.cross_moe = MoEFusion(
             latent_dim,
             latent_dim,
             latent_dim,
             num_experts=moe_num_experts,
             hidden_dim=moe_hidden_dim,
+            gate_noise_mult=float(moe_gate_noise_mult),
         )
         self.encoder_view1 = GCNEncoder(
             input_dim=input_dim1,
@@ -332,11 +338,14 @@ class GCNAutoencoder(nn.Module):
         if not self.emb_global_attn:
             return z_l
 
-        # Stable, locality-aware attention:
-        # - Normalize features (cosine similarity)
-        # - Optional adjacency mask (prevents global majority pooling)
-        z_attn = F.normalize(z_l, dim=1, eps=1e-12)
-        scores = torch.mm(z_attn, z_attn.t()) / self.emb_attn_temp
+        # Global attention (configurable similarity):
+        # - cosine: normalize features for cosine similarity
+        # - dot   : raw dot-product (legacy behavior; often better ARI here)
+        if self.emb_attn_sim == "cosine":
+            z_attn = F.normalize(z_l, dim=1, eps=1e-12)
+            scores = torch.mm(z_attn, z_attn.t()) / self.emb_attn_temp
+        else:  # "dot"
+            scores = torch.mm(z_l, z_l.t()) / self.emb_attn_temp
 
         if self.emb_attn_mask:
             mask = adj > 0
